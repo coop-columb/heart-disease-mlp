@@ -40,9 +40,9 @@ model:
     random_state: 42
   advanced_mlp:
     architecture:
-      - {units: 128, activation: 'leaky_relu', dropout: 0.3}
-      - {units: 64, activation: 'leaky_relu', dropout: 0.3}
-      - {units: 32, activation: 'leaky_relu', dropout: 0.2}
+      - {units: 128, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 64, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 32, activation: 'leaky_relu', dropout: 0.2, l2_regularization: 0.01}
     batch_size: 32
     epochs: 150
     learning_rate: 0.001
