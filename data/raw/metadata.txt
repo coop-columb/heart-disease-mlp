@@ -1,0 +1,5 @@
+download_date: 2025-03-21 18:45:24
+dataset_sources: ['cleveland', 'hungarian', 'switzerland', 'va']
+total_records: 920
+columns: ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'target', 'source']
+missing_values: {'age': 0, 'sex': 0, 'cp': 0, 'trestbps': 59, 'chol': 30, 'fbs': 90, 'restecg': 2, 'thalach': 55, 'exang': 55, 'oldpeak': 62, 'slope': 309, 'ca': 611, 'thal': 486, 'target': 0, 'source': 0}
