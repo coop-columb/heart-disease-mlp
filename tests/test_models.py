@@ -6,14 +6,9 @@ import pytest
 import tensorflow as tf
 from sklearn.neural_network import MLPClassifier
 
-from src.models.mlp_model import (
-    build_keras_mlp,
-    build_sklearn_mlp,
-    combine_predictions,
-    evaluate_sklearn_mlp,
-    interpret_prediction,
-    train_sklearn_mlp,
-)
+from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
+                                  combine_predictions, evaluate_sklearn_mlp,
+                                  interpret_prediction, train_sklearn_mlp)
 
 
 @pytest.fixture
@@ -115,23 +110,31 @@ def test_build_keras_mlp():
     """Test that Keras MLP model is built correctly."""
     input_dim = 10
     architecture = [
-        {"units": 64, "activation": "relu", "dropout": 0.2, "l2_regularization": 0.01},
-        {"units": 32, "activation": "relu", "dropout": 0.1, "l2_regularization": 0.01},
+        {
+            "units": 64,
+            "activation": "relu",
+            "dropout": 0.2,
+            "l2_regularization": 0.01,
+        },
+        {
+            "units": 32,
+            "activation": "relu",
+            "dropout": 0.1,
+            "l2_regularization": 0.01,
+        },
     ]
-    
+
     model = build_keras_mlp(
-        input_dim=input_dim,
-        architecture=architecture,
-        learning_rate=0.001
+        input_dim=input_dim, architecture=architecture, learning_rate=0.001
     )
-    
+
     # Check model type
     assert isinstance(model, tf.keras.Model)
-    
+
     # Check that model has been compiled
     assert model.optimizer is not None
     assert model.loss is not None
-    
+
     # Check that model has the correct architecture layers
     assert len(model.layers) >= len(architecture) + 2  # Input, hidden layers, output
 
@@ -140,18 +143,22 @@ def test_combine_predictions():
     """Test that predictions can be combined correctly."""
     sklearn_proba = np.array([0.1, 0.7, 0.3, 0.9, 0.4])
     keras_proba = np.array([0.2, 0.8, 0.4, 0.8, 0.3])
-    
+
     # Test mean method
     mean_proba = combine_predictions(sklearn_proba, keras_proba, method="mean")
     assert np.allclose(mean_proba, (sklearn_proba + keras_proba) / 2)
-    
+
     # Test max method
     max_proba = combine_predictions(sklearn_proba, keras_proba, method="max")
     assert np.allclose(max_proba, np.maximum(sklearn_proba, keras_proba))
-    
+
     # Test product method
     product_proba = combine_predictions(sklearn_proba, keras_proba, method="product")
     assert np.allclose(product_proba, np.sqrt(sklearn_proba * keras_proba))
+    
+    # Test weighted method
+    weighted_proba = combine_predictions(sklearn_proba, keras_proba, method="weighted")
+    assert np.allclose(weighted_proba, 0.4 * sklearn_proba + 0.6 * keras_proba)
 
 
 def test_interpret_prediction():
@@ -164,15 +171,15 @@ def test_interpret_prediction():
         "chol": 250,
         "fbs": 1,
         "thalach": 130,
-        "exang": 1
+        "exang": 1,
     }
-    
+
     # Test direct prediction interpretation without a model
     result = interpret_prediction(None, patient, probability=0.85)
-    
+
     # Check that interpretation is a string
     assert isinstance(result, str)
-    
+
     # Check for presence of key phrases for high risk
     assert "HIGH RISK" in result
     assert "Advanced age" in result
@@ -182,7 +189,7 @@ def test_interpret_prediction():
     assert "Fasting blood sugar" in result
     assert "Reduced maximum heart rate" in result
     assert "Exercise-induced angina" in result
-    
+
     # Test with low risk probability
     low_risk_patient = {
         "age": 35,
@@ -191,11 +198,11 @@ def test_interpret_prediction():
         "chol": 190,
         "fbs": 0,
         "thalach": 180,
-        "exang": 0
+        "exang": 0,
     }
-    
+
     low_risk_result = interpret_prediction(None, low_risk_patient, probability=0.15)
-    
+
     # Check for presence of key phrases for low risk
     assert "LOW RISK" in low_risk_result
     assert "No major risk factors identified" in low_risk_result
