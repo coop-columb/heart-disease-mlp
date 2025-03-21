@@ -1,0 +1,13 @@
+original_data_path: data/raw/heart_disease_combined.csv
+train_samples: 552
+validation_samples: 184
+test_samples: 184
+total_samples: 920
+numerical_features: ['age', 'trestbps', 'chol', 'thalach', 'oldpeak', 'age_sex', 'cp_exang', 'bp_chol', 'risk_score', 'cardiovascular_age']
+categorical_features: ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+engineered_features: ['age_sex', 'cp_exang', 'bp_chol', 'risk_score', 'cardiovascular_age']
+feature_count_before_encoding: 18
+feature_count_after_encoding: 25
+positive_class_ratio_train: 0.552536231884058
+positive_class_ratio_val: 0.5543478260869565
+positive_class_ratio_test: 0.5543478260869565
