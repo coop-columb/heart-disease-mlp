@@ -2,23 +2,17 @@
 Tests for data processing functionality.
 """
 
-import os
+# import os  # Used for file operations
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.preprocess import (
-    binarize_target,
-    create_preprocessing_pipeline,
-    handle_missing_values,
-    load_data,
-    split_data,
-)
-from src.features.feature_engineering import (
-    create_feature_interactions,
-    create_medical_risk_score,
-)
+from src.data.preprocess import (  # load_data,  # Used in integration tests
+    binarize_target, create_preprocessing_pipeline, handle_missing_values,
+    split_data)
+from src.features.feature_engineering import (create_feature_interactions,
+                                              create_medical_risk_score)
 
 
 @pytest.fixture

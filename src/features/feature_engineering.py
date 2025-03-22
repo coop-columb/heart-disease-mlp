@@ -3,9 +3,9 @@ Feature engineering for Heart Disease Prediction project.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import List
 
-import numpy as np
+# numpy used in development
 import pandas as pd
 
 # Configure logging

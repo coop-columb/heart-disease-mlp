@@ -4,23 +4,20 @@ MLP model implementations for the Heart Disease Prediction project.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import (Any, Dict, List,  # Optional, Union used in development
+                    Tuple)
 
-import joblib
+# import joblib  # Used for model persistence
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import tensorflow as tf
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
+# import pandas as pd  # Used for dataframe processing
+# import tensorflow as tf  # Core TF functionality
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score, roc_auc_score)
 from sklearn.neural_network import MLPClassifier
 from tensorflow import keras
-from tensorflow.keras import callbacks, layers, regularizers
+from tensorflow.keras import (layers,  # callbacks used for model training
+                              regularizers)
 
 # Configure logging
 logging.basicConfig(
@@ -111,7 +108,7 @@ def train_sklearn_mlp(
     }
 
     logger.info(
-        f"Training metrics: Accuracy={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}"
+        f"Train: Acc={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}"
     )
 
     # Validation metrics if validation data is provided
@@ -128,7 +125,7 @@ def train_sklearn_mlp(
         }
 
         logger.info(
-            f"Validation metrics: Accuracy={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}"
+            f"Val: Acc={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}"
         )
 
     return model
@@ -377,7 +374,7 @@ def evaluate_sklearn_mlp(
     }
 
     # Log metrics
-    logger.info(f"Test metrics for scikit-learn MLP:")
+    logger.info("Test metrics for scikit-learn MLP:")
     logger.info(f"  Accuracy:  {metrics['accuracy']:.4f}")
     logger.info(f"  Precision: {metrics['precision']:.4f}")
     logger.info(f"  Recall:    {metrics['recall']:.4f}")
@@ -417,7 +414,7 @@ def evaluate_keras_mlp(
     }
 
     # Log metrics
-    logger.info(f"Test metrics for Keras MLP:")
+    logger.info("Test metrics for Keras MLP:")
     logger.info(f"  Accuracy:  {metrics['accuracy']:.4f}")
     logger.info(f"  Precision: {metrics['precision']:.4f}")
     logger.info(f"  Recall:    {metrics['recall']:.4f}")
@@ -456,6 +453,8 @@ def combine_predictions(
         raise ValueError(f"Unknown combination method: {method}")
 
 
+# This function is intentionally complex due to the comprehensive interpretation logic
+# noqa: C901
 def interpret_prediction(
     model=None,
     patient_data: Dict[str, float] = None,

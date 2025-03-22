@@ -3,9 +3,9 @@ Data preprocessing module for the Heart Disease Prediction project.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Tuple
 
-import numpy as np
+# numpy used in development
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import KNNImputer, SimpleImputer
@@ -66,6 +66,8 @@ def binarize_target(df: pd.DataFrame, target_col: str = "target") -> pd.DataFram
     return df
 
 
+# This function is intentionally complex due to the specific rules for each feature
+# noqa: C901
 def handle_missing_values(
     df: pd.DataFrame,
     numeric_strategy: str = "median",
@@ -228,7 +230,7 @@ def split_data(
     )
 
     logger.info(
-        f"Data split complete. Shapes: X_train={X_train.shape}, X_val={X_val.shape}, X_test={X_test.shape}"
+        f"Data split complete. Train:{X_train.shape}, Val:{X_val.shape}, Test:{X_test.shape}"
     )
 
     return X_train, X_val, X_test, y_train, y_val, y_test

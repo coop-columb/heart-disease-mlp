@@ -4,27 +4,27 @@ Hyperparameter tuning for MLP models using Optuna.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt  # Uncomment when visualization needed
 import numpy as np
 import optuna
-import pandas as pd
+# import pandas as pd  # Uncomment when dataframe processing needed
 import tensorflow as tf
-from optuna.visualization import plot_optimization_history, plot_param_importances
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
+from optuna.visualization import (plot_optimization_history,
+                                  plot_param_importances)
+# Metrics used for model evaluation
+# from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from tensorflow import keras
-from tensorflow.keras import callbacks, layers
+from tensorflow.keras import callbacks  # layers used in development
 
-from src.models.mlp_model import build_keras_mlp, build_sklearn_mlp, train_keras_mlp
+from src.models.mlp_model import (  # train_keras_mlp used in development
+    build_keras_mlp, build_sklearn_mlp)
+
+# For type hints (uncomment when needed)
+# from typing import Any, Dict, List, Optional, Tuple, Union
+
 
 # Configure logging
 logging.basicConfig(
@@ -205,7 +205,7 @@ def tune_keras_mlp(X_train, y_train, X_val, y_val, n_trials=50, random_state=42)
         )
 
         # Evaluate model
-        val_loss = min(history.history["val_loss"])
+        # val_loss = min(history.history["val_loss"])  # Used for debugging
         val_auc = max(history.history["val_auc"])
 
         return val_auc
