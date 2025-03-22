@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: heart-disease-mlp
+    env: docker
+    region: ohio  # Choose the region closest to your users
+    plan: free  # Starts with a free instance
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: MODEL_PATH
+        value: /app/models/
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ENVIRONMENT
+        value: production
+      - key: MAX_WORKERS
+        value: 1  # Adjust based on your instance size
+    autoDeploy: true  # Enable auto deployments on push to main branch
