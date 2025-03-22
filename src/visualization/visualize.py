@@ -1,6 +1,7 @@
 """
 Visualization functions for heart disease prediction project.
 """
+
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt

@@ -1,6 +1,7 @@
 """
 FastAPI application for heart disease prediction API.
 """
+
 # flake8: noqa: F401, E501
 import logging
 import os

@@ -1,6 +1,7 @@
 """
 Tests for MLP model functionality.
 """
+
 import numpy as np
 import pytest
 import tensorflow as tf
@@ -155,7 +156,7 @@ def test_combine_predictions():
     # Test product method
     product_proba = combine_predictions(sklearn_proba, keras_proba, method="product")
     assert np.allclose(product_proba, np.sqrt(sklearn_proba * keras_proba))
-    
+
     # Test weighted method
     weighted_proba = combine_predictions(sklearn_proba, keras_proba, method="weighted")
     assert np.allclose(weighted_proba, 0.4 * sklearn_proba + 0.6 * keras_proba)

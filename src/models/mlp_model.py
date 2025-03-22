@@ -1,6 +1,7 @@
 """
 MLP model implementations for the Heart Disease Prediction project.
 """
+
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -451,7 +452,10 @@ def combine_predictions(
 
 
 def interpret_prediction(
-    model=None, patient_data: Dict[str, float] = None, feature_names: List[str] = None, probability: float = None
+    model=None,
+    patient_data: Dict[str, float] = None,
+    feature_names: List[str] = None,
+    probability: float = None,
 ) -> str:
     """
     Interpret a model prediction for a single patient.
@@ -478,63 +482,71 @@ def interpret_prediction(
 
     # Start building the interpretation
     interpretation = []
-    
+
     # High vs low risk determination
     if probability > 0.5:
-        interpretation.append(f"HIGH RISK PREDICTION: {probability:.1%} probability of heart disease")
-        
+        interpretation.append(
+            f"HIGH RISK PREDICTION: {probability:.1%} probability of heart disease"
+        )
+
         # Identify risk factors
         risk_factors = []
-        
+
         # Check common risk factors
         if "age" in patient_data and patient_data["age"] > 55:
             risk_factors.append("Advanced age (over 55)")
-        
+
         if "sex" in patient_data and patient_data["sex"] == 1:
             risk_factors.append("Male over 45")
-            
+
         if "trestbps" in patient_data and patient_data["trestbps"] > 140:
             risk_factors.append("Elevated resting blood pressure")
-            
+
         if "chol" in patient_data and patient_data["chol"] > 240:
             risk_factors.append("High cholesterol")
-            
+
         if "fbs" in patient_data and patient_data["fbs"] == 1:
             risk_factors.append("Fasting blood sugar > 120 mg/dl")
-            
+
         if "thalach" in patient_data and patient_data["thalach"] < 150:
             risk_factors.append("Reduced maximum heart rate")
-            
+
         if "exang" in patient_data and patient_data["exang"] == 1:
             risk_factors.append("Exercise-induced angina")
-            
+
         # Add risk factors to interpretation
         interpretation.append("\nKey risk factors identified:")
         for factor in risk_factors:
             interpretation.append(f"- {factor}")
-            
+
         # Add recommendations
         interpretation.append("\nRecommendations:")
         interpretation.append("- Consult with a cardiologist")
         interpretation.append("- Consider stress test or other cardiac evaluations")
         interpretation.append("- Review medication and lifestyle modifications")
-            
+
     else:
-        interpretation.append(f"LOW RISK PREDICTION: {probability:.1%} probability of heart disease")
-        
+        interpretation.append(
+            f"LOW RISK PREDICTION: {probability:.1%} probability of heart disease"
+        )
+
         # For low risk, do a quick check if there are any risk factors
         has_risk_factors = False
-        if ("age" in patient_data and patient_data["age"] > 45) or \
-           ("sex" in patient_data and patient_data["sex"] == 1) or \
-           ("trestbps" in patient_data and patient_data["trestbps"] > 130) or \
-           ("chol" in patient_data and patient_data["chol"] > 200) or \
-           ("fbs" in patient_data and patient_data["fbs"] == 1) or \
-           ("thalach" in patient_data and patient_data["thalach"] < 150) or \
-           ("exang" in patient_data and patient_data["exang"] == 1):
+        if (
+            ("age" in patient_data and patient_data["age"] > 45)
+            or ("sex" in patient_data and patient_data["sex"] == 1)
+            or ("trestbps" in patient_data and patient_data["trestbps"] > 130)
+            or ("chol" in patient_data and patient_data["chol"] > 200)
+            or ("fbs" in patient_data and patient_data["fbs"] == 1)
+            or ("thalach" in patient_data and patient_data["thalach"] < 150)
+            or ("exang" in patient_data and patient_data["exang"] == 1)
+        ):
             has_risk_factors = True
-            
+
         if has_risk_factors:
-            interpretation.append("\nSome risk factors present, but overall risk is low.")
+            interpretation.append(
+                "\nSome risk factors present, but overall risk is low."
+            )
             interpretation.append("\nRecommendations:")
             interpretation.append("- Continue regular check-ups")
             interpretation.append("- Maintain heart-healthy lifestyle")
@@ -543,6 +555,6 @@ def interpret_prediction(
             interpretation.append("\nRecommendations:")
             interpretation.append("- Continue regular check-ups")
             interpretation.append("- Maintain heart-healthy lifestyle")
-            
+
     # Return the complete interpretation as a string
     return "\n".join(interpretation)
