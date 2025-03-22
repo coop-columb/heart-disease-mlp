@@ -15,11 +15,15 @@ The system uses both scikit-learn and TensorFlow/Keras MLP models and combines t
 - **Interpretation**: Clinical interpretation of predictions
 - **API**: FastAPI-based REST API for model serving
 - **Containerization**: Docker setup for easy deployment
+- **CI/CD Pipeline**: GitHub Actions workflows for automated testing, building, and deployment
+- **Security Scanning**: Automated vulnerability scanning for dependencies and Docker images
 
 ## Project Structure
 
 ```
 heart-disease-mlp/
+├── .github/            # GitHub configuration
+│   └── workflows/      # GitHub Actions CI/CD workflows
 ├── api/                # API implementation
 ├── config/             # Configuration files
 ├── data/               # Data storage
@@ -138,6 +142,19 @@ The current models achieve the following performance on the test set:
 - Scikit-learn MLP: 85.3% accuracy, 0.929 ROC AUC
 - Keras MLP: 85.3% accuracy, 0.926 ROC AUC
 - Ensemble: 86.4% accuracy, 0.930 ROC AUC
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **Automated Testing**: Runs unit tests and integration tests on multiple Python versions
+- **Code Quality**: Enforces code style with black, isort, and flake8
+- **Docker Image Building**: Builds and pushes Docker images to GitHub Container Registry
+- **Automatic Deployment**: Deploys to staging and production environments
+- **Security Scanning**: Checks dependencies and Docker images for vulnerabilities
+- **Automated Model Retraining**: Schedules monthly model retraining and evaluation
+
+For more details, see the [workflows documentation](.github/workflows/README.md).
 
 ## License
 
