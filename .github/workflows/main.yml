@@ -7,6 +7,11 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+# Add explicit permissions
+permissions:
+  contents: read
+  packages: write  # Needed for pushing to ghcr.io
+
 jobs:
   # Code Quality & Tests
   lint-and-test:
