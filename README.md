@@ -330,6 +330,18 @@ heart-disease-mlp/
    ./scripts/test_api.sh
    ```
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+1. **CI Pipeline**: Automatically runs tests, builds Docker image, and performs security scans
+2. **CD Pipeline**: Deploys to staging and production environments
+3. **Model Retraining**: Automatically retrains models on a monthly schedule
+
+For setup instructions:
+- See [CI/CD Setup Guide](.github/CICD_SETUP.md) for configuring the workflow
+- See [Deployment Secrets Guide](.github/DEPLOYMENT_SECRETS.md) for setting up required secrets
+
 ## Model Architecture
 
 The project implements two types of MLP models:
