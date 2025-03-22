@@ -69,7 +69,7 @@ on:
 
 jobs:
   # Basic testing job omitted for brevity
-  
+
   deploy-to-railway:
     name: Deploy to Railway
     needs: lint-and-test
@@ -85,7 +85,7 @@ jobs:
 
       - name: Install Railway CLI
         run: npm i -g @railway/cli
-        
+
       - name: Verify Railway CLI installation
         run: railway --version
 
@@ -106,13 +106,13 @@ jobs:
         run: |
           # Explicitly login with browserless mode
           railway login --browserless
-          
+
           # Try to link to an existing project or create a new one
           railway link --yes || railway init --name heart-disease-prediction
-          
+
           # Deploy with verbose output to help debug issues
           railway up --verbose --detach
-          
+
           # Get deployment status
           railway status
         env:

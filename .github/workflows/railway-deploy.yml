@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Railway CLI
         run: npm i -g @railway/cli
-        
+
       - name: Verify Railway CLI installation
         run: railway --version
 
@@ -74,11 +74,11 @@ jobs:
           echo "Attempting to deploy to Railway..."
           echo "Current directory: $(pwd)"
           echo "Files in directory: $(ls -la)"
-          
+
           # Explicitly login with browserless mode
           railway login --browserless
           echo "Successfully logged in to Railway"
-          
+
           # Try to link to an existing project first
           echo "Attempting to link to existing project..."
           if railway link --yes; then
@@ -88,7 +88,7 @@ jobs:
             railway init --name heart-disease-prediction
             echo "Successfully created new project"
           fi
-          
+
           # Verify railway.json exists and is valid
           if [ -f "railway.json" ]; then
             echo "railway.json exists:"
@@ -107,11 +107,11 @@ jobs:
               }
             }' > railway.json
           fi
-          
+
           # Deploy with verbose output to help debug issues
           echo "Deploying to Railway..."
           railway up --verbose --detach
-          
+
           # Get deployment status
           echo "Deployment status:"
           railway status
