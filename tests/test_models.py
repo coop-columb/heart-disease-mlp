@@ -7,14 +7,9 @@ import pytest
 import tensorflow as tf
 from sklearn.neural_network import MLPClassifier
 
-from src.models.mlp_model import (
-    build_keras_mlp,
-    build_sklearn_mlp,
-    combine_predictions,
-    evaluate_sklearn_mlp,
-    interpret_prediction,
-    train_sklearn_mlp,
-)
+from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
+                                  combine_predictions, evaluate_sklearn_mlp,
+                                  interpret_prediction, train_sklearn_mlp)
 
 
 @pytest.fixture
