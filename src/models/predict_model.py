@@ -1,6 +1,7 @@
 """
 Module for making predictions with trained heart disease models.
 """
+
 # flake8: noqa: E501
 import logging
 import os

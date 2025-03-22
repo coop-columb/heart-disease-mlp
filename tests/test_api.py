@@ -1,6 +1,7 @@
 """
 Tests for the Heart Disease Prediction API.
 """
+
 # flake8: noqa: E402
 import os
 import sys

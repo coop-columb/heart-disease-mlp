@@ -2,6 +2,7 @@
 Integration tests for the Heart Disease Prediction API.
 These tests verify end-to-end functionality of the API.
 """
+
 from unittest import mock
 
 import pytest

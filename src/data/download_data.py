@@ -1,6 +1,7 @@
 """
 Script to download heart disease dataset from UCI ML Repository.
 """
+
 import argparse
 import hashlib
 import logging
@@ -129,9 +130,7 @@ def download_dataset(output_dir="data/raw", validate_hash=True):
 
         combined_df = pd.concat(dfs, ignore_index=True)
         combined_df.to_csv(combined_file, index=False)
-        logger.info(
-            f"Combined dataset created with {len(combined_df)} records"
-        )
+        logger.info(f"Combined dataset created with {len(combined_df)} records")
 
         # Create metadata file
         metadata = {
@@ -153,9 +152,7 @@ def download_dataset(output_dir="data/raw", validate_hash=True):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Download heart disease dataset"
-    )
+    parser = argparse.ArgumentParser(description="Download heart disease dataset")
     parser.add_argument(
         "--output-dir",
         type=str,
