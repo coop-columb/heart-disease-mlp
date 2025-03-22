@@ -38,25 +38,82 @@ jobs:
         pytest -v tests/test_models.py::test_build_sklearn_mlp tests/test_models.py::test_build_keras_mlp tests/test_models.py::test_combine_predictions tests/test_models.py::test_interpret_prediction tests/test_data.py::test_binarize_target tests/test_data.py::test_create_preprocessing_pipeline tests/test_data.py::test_create_feature_interactions
 
   deploy-to-railway:
+    name: Deploy to Railway
     needs: lint-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Install Railway CLI
         run: npm i -g @railway/cli
+        
+      - name: Verify Railway CLI installation
+        run: railway --version
+
+      - name: Check Railway token
+        run: |
+          # DON'T PRINT THE TOKEN, just check if it's set
+          if [ -n "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN is set"
+          else
+            echo "RAILWAY_TOKEN is not set"
+            exit 1
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Deploy to Railway
+        id: deploy
         run: |
-          echo "Logging in to Railway with token..."
-          railway login --token ${{ secrets.RAILWAY_TOKEN }}
-
-          echo "Creating new project if it doesn't exist..."
-          # Try to link first, and if it fails, create a new project
-          railway link || railway init --name heart-disease-prediction
-
+          echo "Attempting to deploy to Railway..."
+          echo "Current directory: $(pwd)"
+          echo "Files in directory: $(ls -la)"
+          
+          # Explicitly login with browserless mode
+          railway login --browserless
+          echo "Successfully logged in to Railway"
+          
+          # Try to link to an existing project first
+          echo "Attempting to link to existing project..."
+          if railway link --yes; then
+            echo "Successfully linked to existing project"
+          else
+            echo "Creating new project..."
+            railway init --name heart-disease-prediction
+            echo "Successfully created new project"
+          fi
+          
+          # Verify railway.json exists and is valid
+          if [ -f "railway.json" ]; then
+            echo "railway.json exists:"
+            cat railway.json
+          else
+            echo "railway.json does not exist. Creating..."
+            echo '{
+              "$schema": "https://railway.app/railway.schema.json",
+              "build": {
+                "builder": "DOCKERFILE",
+                "dockerfilePath": "Dockerfile"
+              },
+              "deploy": {
+                "restartPolicyType": "ON_FAILURE",
+                "restartPolicyMaxRetries": 10
+              }
+            }' > railway.json
+          fi
+          
+          # Deploy with verbose output to help debug issues
           echo "Deploying to Railway..."
-          railway up --detach
+          railway up --verbose --detach
+          
+          # Get deployment status
+          echo "Deployment status:"
+          railway status
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
