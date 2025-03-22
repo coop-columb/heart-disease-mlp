@@ -168,8 +168,6 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # Uncomment the next line after creating the 'staging' environment in GitHub repository settings
-    # environment: staging
 
     steps:
     - uses: actions/checkout@v3
@@ -213,8 +211,6 @@ jobs:
     needs: deploy-staging
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # Uncomment the next line after creating the 'production' environment in GitHub repository settings
-    # environment: production
 
     steps:
     - name: Manual approval for production deployment
