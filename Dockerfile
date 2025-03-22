@@ -24,8 +24,14 @@ RUN apt-get update \
 # Copy the project files into the container
 COPY . .
 
+# Make the entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
+
+# Create necessary directories
+RUN mkdir -p /app/data/processed /app/models
+
 # Expose port
 EXPOSE $PORT
 
-# Set default command to run the API
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Set entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]
