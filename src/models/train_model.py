@@ -4,13 +4,12 @@ Script to train heart disease prediction models.
 import argparse
 import logging
 import os
-from typing import Any, Dict
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import tensorflow as tf
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score, roc_auc_score)
 from tensorflow import keras
 
 from src.models.hyperparameter_tuning import tune_keras_mlp, tune_sklearn_mlp
@@ -20,7 +19,6 @@ from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
                                   train_sklearn_mlp)
 from src.utils import load_config
 from src.visualization.visualize import (plot_confusion_matrix,
-                                         plot_feature_importance,
                                          plot_precision_recall_curve,
                                          plot_roc_curve)
 
@@ -55,7 +53,8 @@ def load_processed_data(processed_data_path):
             y_test = data["y_test"]
 
         logger.info(
-            f"Loaded data shapes: X_train={X_train.shape}, X_val={X_val.shape}, X_test={X_test.shape}"
+            f"Loaded data shapes: X_train={X_train.shape}, X_val={X_val.shape}, "
+            f"X_test={X_test.shape}"
         )
         return X_train, X_val, X_test, y_train, y_val, y_test
 
