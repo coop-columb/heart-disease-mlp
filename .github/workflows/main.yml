@@ -72,7 +72,8 @@ jobs:
 
     - name: Generate coverage report
       run: |
-        pytest --cov=src --cov=api --cov-report=xml
+        # Explicitly exclude test_api_endpoint.py which attempts to connect to a local API
+        pytest --cov=src --cov=api --cov-report=xml --ignore=test_api_endpoint.py
 
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
