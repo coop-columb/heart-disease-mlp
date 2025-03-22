@@ -3,11 +3,17 @@
 Use this file as a reminder of the secrets you need to configure in GitHub.
 Check off each item as you complete it.
 
-## Repository Secrets
+## Railway Deployment (Recommended)
 
-Add the following secrets in GitHub: Repository → Settings → Secrets and variables → Actions → New repository secret
+Add the following secret for Railway deployment:
 
-- [ ] `SSH_PRIVATE_KEY`: The SSH private key you generated (the content of `~/.ssh/heart-disease-deploy/deploy_key`)
+- [ ] `RAILWAY_TOKEN`: Your Railway API token (Get from Railway dashboard → Settings → API Tokens)
+
+## Traditional Server Deployment (Alternative)
+
+If you prefer to use traditional server deployment instead of Railway, add these secrets:
+
+- [x] `SSH_PRIVATE_KEY`: The SSH private key you generated (already added)
 - [ ] `DEPLOY_HOST`: Hostname/IP for staging server
 - [ ] `DEPLOY_USER`: Username for staging server
 - [ ] `PROD_DEPLOY_HOST`: Hostname/IP for production server
