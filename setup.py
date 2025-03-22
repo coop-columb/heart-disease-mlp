@@ -1,7 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="heart-disease-mlp",
-    version="0.1",
+    version="1.0.0",
     packages=find_packages(),
 )
