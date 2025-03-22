@@ -167,7 +167,8 @@ jobs:
   deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only run if DEPLOY_HOST is configured (makes deployment optional)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_HOST != ''
 
     steps:
     - uses: actions/checkout@v3
@@ -210,7 +211,8 @@ jobs:
   deploy-production:
     needs: deploy-staging
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only run if PROD_DEPLOY_HOST is configured (makes deployment optional)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.PROD_DEPLOY_HOST != ''
 
     steps:
     - name: Manual approval for production deployment
