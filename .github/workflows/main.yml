@@ -175,7 +175,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Debug GitHub context
@@ -191,9 +191,14 @@ jobs:
         echo "Verifying Docker setup..."
         docker version
         echo "Trying registry access..."
-        docker logout ghcr.io || true
         echo "Current Docker config:"
         cat ~/.docker/config.json || echo "No Docker config file found"
+
+    - name: Ensure Docker is logged in
+      run: |
+        echo "Re-checking Docker login status..."
+        echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+        echo "Docker login complete"
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
@@ -201,21 +206,21 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/${{ github.actor }}/heart-disease-mlp:latest
-          ghcr.io/${{ github.actor }}/heart-disease-mlp:${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:latest
+          ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
     - name: Verify pushed image
       run: |
         echo "Verifying image was pushed to registry..."
-        docker pull ghcr.io/${{ github.actor }}/heart-disease-mlp:latest || echo "Failed to pull image, but continuing"
+        docker pull ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:latest || echo "Failed to pull image, but continuing"
         docker images | grep heart-disease-mlp || echo "Image not found locally, but may still be in registry"
 
     - name: Scan image for vulnerabilities
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ghcr.io/${{ github.actor }}/heart-disease-mlp:${{ github.sha }}
+        image-ref: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
         format: 'table'
         exit-code: '0'  # Don't fail on vulnerabilities
         severity: 'CRITICAL,HIGH'
@@ -250,7 +255,7 @@ jobs:
     - name: Deploy to staging server
       if: steps.check_secrets.outputs.skip_deployment != 'true'
       env:
-        CONTAINER_IMAGE: ghcr.io/${{ github.actor }}/heart-disease-mlp:${{ github.sha }}
+        CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
         DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       run: |
