@@ -1,77 +1,86 @@
 # CI/CD Setup Guide
 
-This guide explains how to set up the CI/CD pipeline for the Heart Disease MLP project.
+This document provides instructions for setting up the CI/CD pipeline for the Heart Disease Prediction System.
 
-## Required GitHub Secrets
+## GitHub Environments Setup
 
-To enable the full functionality of the CI/CD pipeline, you need to configure the following secrets in your GitHub repository:
+The deployment workflow uses GitHub Environments for staging and production deployments. To set these up:
 
-1. Navigate to your repository on GitHub
-2. Go to Settings > Secrets and variables > Actions
-3. Add the following repository secrets:
-
-### Deployment Secrets
-
-| Secret Name | Description |
-|-------------|-------------|
-| `SSH_PRIVATE_KEY` | SSH private key for deployment access (without passphrase) |
-| `DEPLOY_HOST` | Hostname or IP of the staging server |
-| `DEPLOY_USER` | Username for SSH access to staging server |
-| `PROD_DEPLOY_HOST` | Hostname or IP of the production server |
-| `PROD_DEPLOY_USER` | Username for SSH access to production server |
-
-## GitHub Environments
-
-The pipeline uses GitHub Environments for deployment management and approval workflows:
-
-1. Go to your repository on GitHub
-2. Navigate to Settings > Environments
-3. Create two environments:
+1. Go to your GitHub repository
+2. Click on "Settings" > "Environments"
+3. Click "New environment"
+4. Create two environments:
    - `staging`
    - `production`
+5. For each environment, you can set up:
+   - Environment protection rules (e.g., required reviewers)
+   - Environment secrets (see below)
 
-### Production Environment Protection Rules
+## Required Secrets
 
-For the production environment, add protection rules:
+The following secrets need to be added to your GitHub repository:
 
-1. Required reviewers: Add team members who should approve production deployments
-2. Wait timer: Consider adding a wait period (e.g., 10 minutes) before production deployments
+### Repository Secrets
 
-## Container Registry Access
+1. `SSH_PRIVATE_KEY`: The SSH private key for connecting to deployment servers
 
-To enable pushing Docker images to GitHub Container Registry:
+### Environment Secrets (for staging)
 
-1. Go to your repository on GitHub
-2. Navigate to Settings > Actions > General
-3. Under "Workflow permissions", select:
-   - "Read and write permissions"
-   - Check "Allow GitHub Actions to create and approve pull requests"
+1. `DEPLOY_HOST`: The hostname/IP of your staging server
+2. `DEPLOY_USER`: The username for SSH access to your staging server
 
-## Server Setup
+### Environment Secrets (for production)
 
-Ensure the following on your deployment servers:
+1. `PROD_DEPLOY_HOST`: The hostname/IP of your production server
+2. `PROD_DEPLOY_USER`: The username for SSH access to your production server
 
-1. Docker and Docker Compose are installed
-2. The deployment user has permissions to run Docker commands
-3. The SSH key specified in `SSH_PRIVATE_KEY` is authorized on the server
-4. Project directory structure is properly set up:
-   ```
-   ~/heart-disease-mlp/
-   └── docker-compose.yml
-   ```
+## Workflow Configuration
 
-## Monitoring Setup
+After setting up environments and secrets, uncomment the `environment` lines in `.github/workflows/main.yml`:
 
-After configuring the CI/CD pipeline, monitor its performance:
+```yml
+deploy-staging:
+  # ...
+  environment: staging  # Uncomment this line
+  # ...
 
-1. Check GitHub Actions runs to ensure all jobs complete successfully
-2. Verify deployments reach staging and production environments
-3. Consider setting up notifications for workflow failures:
-   - Go to your GitHub profile > Settings > Notifications
-   - Configure preferences for workflow run notifications
+deploy-production:
+  # ...
+  environment: production  # Uncomment this line
+  # ...
+```
 
-## Troubleshooting
+## Manual Pipeline Triggering
 
-- **SSH Connection Issues**: Ensure the SSH key is correctly formatted and doesn't have a passphrase
-- **Docker Build Failures**: Check for Docker Hub rate limits; consider authenticating with Docker Hub
-- **Deployment Failures**: Verify server disk space, Docker daemon status, and network accessibility
+You can manually trigger the CI/CD pipeline:
+
+1. Go to your GitHub repository
+2. Click on "Actions"
+3. Select "CI/CD Pipeline" from the workflows list
+4. Click "Run workflow"
+5. Select the branch to run it on
+6. Click "Run workflow"
+
+## Model Retraining
+
+You can manually trigger model retraining:
+
+1. Go to your GitHub repository
+2. Click on "Actions"
+3. Select "Model Retraining and Evaluation" from the workflows list
+4. Click "Run workflow"
+5. Configure retraining options:
+   - Enable/disable hyperparameter tuning
+   - Set number of tuning trials (if tuning is enabled)
+6. Click "Run workflow"
+
+The retraining workflow is also scheduled to run automatically on the 1st of each month at 3am UTC.
+
+## Security Scanning
+
+The security scanning workflow runs automatically:
+- On pushes to main
+- On pull requests to main
+- Weekly (every Monday at 1am UTC)
+
+You can also trigger it manually through the Actions tab.
