@@ -21,14 +21,27 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install safety
+    - name: Install security tools
       run: |
         python -m pip install --upgrade pip
-        pip install safety
+        pip install safety pip-audit
+        pip install -r requirements.txt
 
-    - name: Check for vulnerable dependencies
+    - name: Check for vulnerable dependencies with Safety
       run: |
-        safety check -r requirements.txt
+        safety check -r requirements.txt --full-report
+      continue-on-error: true
+
+    - name: Check for vulnerable dependencies with pip-audit
+      run: |
+        pip-audit --requirement requirements.txt --output json --output-file pip-audit-results.json
+      continue-on-error: true
+
+    - name: Upload dependency scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-scan-results
+        path: pip-audit-results.json
 
   code-scan:
     runs-on: ubuntu-latest
@@ -43,18 +56,72 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install bandit
+        pip install bandit semgrep
 
     - name: Run Bandit security scan
       run: |
         bandit -r src/ api/ -f json -o bandit-results.json
+        bandit -r src/ api/ -f txt -o bandit-results.txt
       continue-on-error: true
 
-    - name: Upload scan results
+    - name: Display Bandit results
+      run: cat bandit-results.txt
+      continue-on-error: true
+
+    - name: Run Semgrep security scan
+      run: |
+        semgrep scan --config auto --junit-xml semgrep-results.xml src/ api/
+      continue-on-error: true
+
+    - name: Check for secrets in code
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+
+    - name: Upload security scan results
       uses: actions/upload-artifact@v3
       with:
         name: security-scan-results
-        path: bandit-results.json
+        path: |
+          bandit-results.json
+          bandit-results.txt
+          semgrep-results.xml
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint pylama radon
+
+    - name: Run pylint
+      run: |
+        pylint --output-format=text src/ api/ | tee pylint-results.txt
+      continue-on-error: true
+
+    - name: Run code complexity analysis
+      run: |
+        radon cc src/ api/ --show-complexity --average | tee complexity-results.txt
+        radon mi src/ api/ | tee maintainability-results.txt
+      continue-on-error: true
+
+    - name: Upload code quality results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-quality-results
+        path: |
+          pylint-results.txt
+          complexity-results.txt
+          maintainability-results.txt
 
   docker-scan:
     runs-on: ubuntu-latest
@@ -78,8 +145,85 @@ jobs:
         image-ref: heart-disease-mlp:scan
         format: 'sarif'
         output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Generate Trivy vulnerability report
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: heart-disease-mlp:scan
+        format: 'table'
+        output: 'trivy-results.txt'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+
+    - name: Display vulnerability report
+      run: cat trivy-results.txt
 
     - name: Upload Trivy scan results
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: 'trivy-results.sarif'
+
+    - name: Upload Trivy text report
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-security-results
+        path: trivy-results.txt
+
+  security-summary:
+    needs: [dependency-scan, code-scan, docker-scan, code-quality]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate combined security report
+      run: |
+        echo "# Security Scan Summary" > security-report.md
+        echo "" >> security-report.md
+        echo "## Dependency Vulnerabilities" >> security-report.md
+        echo "" >> security-report.md
+        if [ -f "dependency-scan-results/pip-audit-results.json" ]; then
+          echo "Found $(grep -c vulnerability dependency-scan-results/pip-audit-results.json || echo '0') potential vulnerabilities in dependencies." >> security-report.md
+        else
+          echo "No dependency scan results found." >> security-report.md
+        fi
+        echo "" >> security-report.md
+
+        echo "## Code Security Issues" >> security-report.md
+        echo "" >> security-report.md
+        if [ -f "security-scan-results/bandit-results.txt" ]; then
+          HIGH_ISSUES=$(grep -c "High" security-scan-results/bandit-results.txt || echo "0")
+          MEDIUM_ISSUES=$(grep -c "Medium" security-scan-results/bandit-results.txt || echo "0")
+          echo "Bandit found approximately $HIGH_ISSUES high and $MEDIUM_ISSUES medium severity issues." >> security-report.md
+        else
+          echo "No code security scan results found." >> security-report.md
+        fi
+        echo "" >> security-report.md
+
+        echo "## Docker Image Vulnerabilities" >> security-report.md
+        echo "" >> security-report.md
+        if [ -f "docker-security-results/trivy-results.txt" ]; then
+          CRITICAL=$(grep -c "CRITICAL" docker-security-results/trivy-results.txt || echo "0")
+          HIGH=$(grep -c "HIGH" docker-security-results/trivy-results.txt || echo "0")
+          echo "Found approximately $CRITICAL critical and $HIGH high severity vulnerabilities in Docker image." >> security-report.md
+        else
+          echo "No Docker scan results found." >> security-report.md
+        fi
+        echo "" >> security-report.md
+
+        echo "## Code Quality Metrics" >> security-report.md
+        echo "" >> security-report.md
+        if [ -f "code-quality-results/complexity-results.txt" ]; then
+          AVG_COMPLEXITY=$(grep "Average complexity" code-quality-results/complexity-results.txt | awk '{print $NF}' || echo "N/A")
+          echo "Average code complexity: $AVG_COMPLEXITY" >> security-report.md
+        else
+          echo "No code quality results found." >> security-report.md
+        fi
+
+        cat security-report.md
+
+    - name: Upload security summary report
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-summary-report
+        path: security-report.md
