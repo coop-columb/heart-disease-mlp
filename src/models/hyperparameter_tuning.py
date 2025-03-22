@@ -6,13 +6,15 @@ import logging
 import os
 
 import joblib
+
 # import matplotlib.pyplot as plt  # Uncomment when visualization needed
 import numpy as np
 import optuna
+
 # import pandas as pd  # Uncomment when dataframe processing needed
 import tensorflow as tf
-from optuna.visualization import (plot_optimization_history,
-                                  plot_param_importances)
+from optuna.visualization import plot_optimization_history, plot_param_importances
+
 # Metrics used for model evaluation
 # from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score
@@ -20,7 +22,9 @@ from tensorflow import keras
 from tensorflow.keras import callbacks  # layers used in development
 
 from src.models.mlp_model import (  # train_keras_mlp used in development
-    build_keras_mlp, build_sklearn_mlp)
+    build_keras_mlp,
+    build_sklearn_mlp,
+)
 
 # For type hints (uncomment when needed)
 # from typing import Any, Dict, List, Optional, Tuple, Union
@@ -48,9 +52,7 @@ def tune_sklearn_mlp(X_train, y_train, n_trials=100, cv=5, random_state=42):
     Returns:
         Best parameters and study object
     """
-    logger.info(
-        f"Starting scikit-learn MLP hyperparameter tuning with {n_trials} trials"
-    )
+    logger.info(f"Starting scikit-learn MLP hyperparameter tuning with {n_trials} trials")
 
     # Define objective function
     def objective(trial):
@@ -69,17 +71,13 @@ def tune_sklearn_mlp(X_train, y_train, n_trials=100, cv=5, random_state=42):
             ],
         )
 
-        activation = trial.suggest_categorical(
-            "activation", ["relu", "tanh", "logistic"]
-        )
+        activation = trial.suggest_categorical("activation", ["relu", "tanh", "logistic"])
 
         solver = trial.suggest_categorical("solver", ["adam", "sgd", "lbfgs"])
 
         alpha = trial.suggest_float("alpha", 1e-5, 1e-2, log=True)
 
-        learning_rate_init = trial.suggest_float(
-            "learning_rate_init", 1e-4, 1e-1, log=True
-        )
+        learning_rate_init = trial.suggest_float("learning_rate_init", 1e-4, 1e-1, log=True)
 
         # Create MLP model
         model = build_sklearn_mlp(

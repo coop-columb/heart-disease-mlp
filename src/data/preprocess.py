@@ -96,9 +96,7 @@ def handle_missing_values(
     if missing_values.sum() > 0:
         logger.info("Missing values found:")
         for col in missing_values[missing_values > 0].index:
-            logger.info(
-                f"  {col}: {missing_values[col]} ({missing_values[col]/len(df)*100:.2f}%)"
-            )
+            logger.info(f"  {col}: {missing_values[col]} ({missing_values[col]/len(df)*100:.2f}%)")
 
         # Impute missing values
         logger.info(f"Imputing numerical values with {numeric_strategy}")
@@ -110,13 +108,9 @@ def handle_missing_values(
                     df[col].fillna(df[col].mean(), inplace=True)
                 elif numeric_strategy == "knn":
                     # This is a placeholder, actual KNN imputation will be handled by the pipeline
-                    logger.info(
-                        "KNN imputation will be handled by the preprocessing pipeline"
-                    )
+                    logger.info("KNN imputation will be handled by the preprocessing pipeline")
                 else:
-                    raise ValueError(
-                        f"Unknown numeric imputation strategy: {numeric_strategy}"
-                    )
+                    raise ValueError(f"Unknown numeric imputation strategy: {numeric_strategy}")
 
         logger.info(f"Imputing categorical values with {categorical_strategy}")
         for col in categorical_cols:
@@ -170,9 +164,7 @@ def create_preprocessing_pipeline(
         scaler = StandardScaler()
 
     # Create transformers
-    numerical_transformer = Pipeline(
-        steps=[("imputer", num_imputer), ("scaler", scaler)]
-    )
+    numerical_transformer = Pipeline(steps=[("imputer", num_imputer), ("scaler", scaler)])
 
     categorical_transformer = Pipeline(
         steps=[
