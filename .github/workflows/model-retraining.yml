@@ -5,6 +5,20 @@ on:
     # Run monthly, on the 1st at 3am
     - cron: '0 3 1 * *'
   workflow_dispatch:
+    inputs:
+      hyperparameter_tuning:
+        description: 'Perform hyperparameter tuning'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      n_trials:
+        description: 'Number of hyperparameter tuning trials'
+        required: false
+        default: '50'
+        type: string
 
 jobs:
   retrain-models:
@@ -28,13 +42,86 @@ jobs:
       run: |
         ./scripts/get_data.sh
 
-    - name: Process data
+    - name: Process data with validation logging
       run: |
-        ./scripts/process_data.sh
+        # Enhanced script with more logging and validation
+        mkdir -p data/processed
+        echo "Starting data preprocessing..."
+        python -m src.data.make_dataset --verbose
+
+        # Validate processed data was created successfully
+        if [ -f "data/processed/processed_data.npz" ] && [ -f "data/processed/preprocessor.joblib" ]; then
+          echo "Data processing completed successfully"
+          ls -la data/processed
+        else
+          echo "Error: Data processing failed!"
+          exit 1
+        fi
+
+    - name: Hyperparameter tuning (if requested)
+      if: github.event.inputs.hyperparameter_tuning == 'true'
+      run: |
+        echo "Starting hyperparameter tuning with ${{ github.event.inputs.n_trials }} trials..."
+        mkdir -p models/optuna
+
+        # Run tuning for scikit-learn model
+        python -m src.models.hyperparameter_tuning \
+          --model sklearn \
+          --n-trials ${{ github.event.inputs.n_trials }} \
+          --study-name sklearn_mlp_study
+
+        # Run tuning for Keras model
+        python -m src.models.hyperparameter_tuning \
+          --model keras \
+          --n-trials ${{ github.event.inputs.n_trials }} \
+          --study-name keras_mlp_study
+
+        # Verify tuning results were saved
+        if [ -f "models/optuna/sklearn_mlp_study.pkl" ] && [ -f "models/optuna/keras_mlp_study.pkl" ]; then
+          echo "Hyperparameter tuning completed successfully"
+        else
+          echo "Warning: Hyperparameter tuning may not have completed correctly"
+        fi
 
     - name: Train models
       run: |
-        ./scripts/train_models.sh
+        echo "Starting model training..."
+        mkdir -p models
+
+        if [ "${{ github.event.inputs.hyperparameter_tuning }}" == "true" ]; then
+          # Train using optimal hyperparameters from tuning
+          ./scripts/train_models.sh --use-tuned
+        else
+          # Normal training
+          ./scripts/train_models.sh
+        fi
+
+        # Verify models were created
+        if [ -f "models/sklearn_mlp_model.joblib" ] || [ -f "models/keras_mlp_model.h5" ]; then
+          echo "Model training completed successfully"
+          ls -la models/
+        else
+          echo "Error: Model training failed!"
+          exit 1
+        fi
+
+    - name: Run model performance tests
+      run: |
+        echo "Running model performance evaluation..."
+        pytest tests/test_model_performance.py -v | tee model_performance.txt
+
+    - name: Generate performance visualizations
+      run: |
+        echo "Generating performance visualizations..."
+        mkdir -p reports/figures
+        python -m src.visualization.visualize --all-plots
+
+    - name: Collect model evaluation metrics
+      run: |
+        echo "Collecting evaluation metrics..."
+        # Extract metrics from performance test output
+        grep "Model Performance Metrics" -A 20 model_performance.txt > evaluation_summary.txt || echo "No metrics found" > evaluation_summary.txt
+        cat evaluation_summary.txt
 
     - name: Setup Git
       run: |
@@ -48,8 +135,17 @@ jobs:
 
     - name: Commit model updates
       run: |
-        git add models/*.joblib models/*.h5 models/evaluation_results.joblib
-        git commit -m "chore: update model weights from automated retraining" || echo "No changes to commit"
+        # Add all model files and visualization results
+        git add models/*.joblib models/*.h5 models/evaluation_results.joblib models/optuna/*.pkl || true
+        git add reports/figures/*.png || true
+
+        # Create detailed commit message
+        git commit -m "feat(models): update model weights and evaluation metrics
+
+        - Update models from automated retraining pipeline
+        - Include updated performance visualizations
+        - Hyperparameter tuning: ${{ github.event.inputs.hyperparameter_tuning || 'false' }}
+        - Date: $(date)" || echo "No changes to commit"
 
     - name: Push changes
       run: |
@@ -58,19 +154,36 @@ jobs:
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
-        title: "Model Update: Automated Retraining Results"
+        title: "Model Update: Automated Retraining Results (${{ github.event.inputs.hyperparameter_tuning == 'true' && 'with tuning' || 'standard' }})"
         body: |
-          ## Automated Model Retraining
+          ## Automated Model Retraining - $(date +"%Y-%m-%d")
 
           This PR contains updated model weights and evaluation metrics from the scheduled retraining pipeline.
 
+          ### Configuration
+          - Hyperparameter Tuning: ${{ github.event.inputs.hyperparameter_tuning || 'false' }}
+          - Tuning Trials (if applicable): ${{ github.event.inputs.n_trials || 'N/A' }}
+
           ### Evaluation Results
 
-          The updated models should be reviewed for performance changes before merging.
+          ```
+          $(cat evaluation_summary.txt || echo "Evaluation metrics not available")
+          ```
+
+          ### Updated Visualizations
+
+          The following visualizations have been updated:
+          - ROC curves
+          - Precision-Recall curves
+          - Confusion matrices
 
           ### Deployment Impact
 
           After merging, the updated models will be deployed in the next CI/CD pipeline run.
+
+          ### Review Instructions
+
+          Please review the model performance metrics to ensure they meet quality standards before approving.
         labels: model-update, automated-pr
         branch: model-update-$(date +"%Y-%m-%d")
         base: main
