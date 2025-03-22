@@ -12,26 +12,21 @@ The workflow needs the following secrets:
 4. `PROD_DEPLOY_HOST`: The hostname or IP address of your production server
 5. `PROD_DEPLOY_USER`: The username to SSH into your production server
 
-## Creating an SSH Key Pair
+## Your Generated SSH Key Pair
 
-If you don't already have an SSH key for deployment:
+You've already generated an SSH key pair:
 
-1. Generate a new SSH key pair:
-   ```bash
-   ssh-keygen -t ed25519 -C "deployment-key" -f ~/.ssh/deployment_key
-   ```
+- Public key: `~/.ssh/heart-disease-deploy/deploy_key.pub`
+- Private key: `~/.ssh/heart-disease-deploy/deploy_key`
 
-2. This creates two files:
-   - `~/.ssh/deployment_key` (private key)
-   - `~/.ssh/deployment_key.pub` (public key)
+The private key will be used as the `SSH_PRIVATE_KEY` in GitHub secrets.
 
-3. The private key will be used as the `SSH_PRIVATE_KEY` in GitHub secrets
+To use this key for deployment, add the public key to the authorized_keys file on your deployment servers:
 
-4. Add the public key to the authorized_keys file on your deployment servers:
-   ```bash
-   ssh-copy-id -i ~/.ssh/deployment_key.pub user@staging-server
-   ssh-copy-id -i ~/.ssh/deployment_key.pub user@production-server
-   ```
+```bash
+ssh-copy-id -i ~/.ssh/heart-disease-deploy/deploy_key.pub user@staging-server
+ssh-copy-id -i ~/.ssh/heart-disease-deploy/deploy_key.pub user@production-server
+```
 
 ## Adding Secrets to GitHub
 
@@ -40,24 +35,28 @@ If you don't already have an SSH key for deployment:
 1. Go to your GitHub repository
 2. Click on "Settings" > "Secrets and variables" > "Actions"
 3. Click "New repository secret"
-4. Add `SSH_PRIVATE_KEY`:
-   - Name: `SSH_PRIVATE_KEY`
-   - Value: The entire contents of your private key file (e.g., `~/.ssh/deployment_key`)
-   - Make sure to include the full key including the begin/end lines
+4. Add all required secrets:
 
-### Environment Secrets
+   a. `SSH_PRIVATE_KEY`:
+      - Name: `SSH_PRIVATE_KEY`
+      - Value: The entire contents of your private key file (`~/.ssh/heart-disease-deploy/deploy_key`)
+      - Make sure to include the full key including the begin/end lines
 
-You need to create environments first:
-1. Go to "Settings" > "Environments"
-2. Create "staging" environment
-3. Add environment secrets:
-   - `DEPLOY_HOST`: Your staging server hostname or IP (e.g., `staging.example.com` or `192.168.1.100`)
-   - `DEPLOY_USER`: Username for SSH access (e.g., `deploy`)
+   b. `DEPLOY_HOST`:
+      - Name: `DEPLOY_HOST`
+      - Value: Your staging server hostname or IP (e.g., `staging.example.com` or `192.168.1.100`)
 
-4. Create "production" environment
-5. Add environment secrets:
-   - `PROD_DEPLOY_HOST`: Your production server hostname or IP (e.g., `production.example.com`)
-   - `PROD_DEPLOY_USER`: Username for SSH access (e.g., `deploy`)
+   c. `DEPLOY_USER`:
+      - Name: `DEPLOY_USER`
+      - Value: Username for SSH access to staging (e.g., `deploy`)
+
+   d. `PROD_DEPLOY_HOST`:
+      - Name: `PROD_DEPLOY_HOST`
+      - Value: Your production server hostname or IP
+
+   e. `PROD_DEPLOY_USER`:
+      - Name: `PROD_DEPLOY_USER`
+      - Value: Username for SSH access to production
 
 ## Server Preparation
 
@@ -90,22 +89,6 @@ On both staging and production servers:
    ```
 
 5. Configure the server for GitHub Container Registry access if needed
-
-## Uncomment Environment References
-
-After setting up all secrets and environments, uncomment the environment lines in `.github/workflows/main.yml`:
-
-```yml
-deploy-staging:
-  # ...
-  environment: staging  # Uncomment this line
-  # ...
-
-deploy-production:
-  # ...
-  environment: production  # Uncomment this line
-  # ...
-```
 
 ## Testing the Deployment
 

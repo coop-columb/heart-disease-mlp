@@ -5,23 +5,45 @@ Check off each item as you complete it.
 
 ## Repository Secrets
 
-- [ ] `SSH_PRIVATE_KEY`: Your SSH private key for deployment
+Add the following secrets in GitHub: Repository → Settings → Secrets and variables → Actions → New repository secret
 
-## Staging Environment Secrets
-
-- [ ] Create "staging" environment in GitHub repository settings
+- [ ] `SSH_PRIVATE_KEY`: The SSH private key you generated (the content of `~/.ssh/heart-disease-deploy/deploy_key`)
 - [ ] `DEPLOY_HOST`: Hostname/IP for staging server
 - [ ] `DEPLOY_USER`: Username for staging server
-
-## Production Environment Secrets
-
-- [ ] Create "production" environment in GitHub repository settings
 - [ ] `PROD_DEPLOY_HOST`: Hostname/IP for production server
 - [ ] `PROD_DEPLOY_USER`: Username for production server
 
-## After Configuration
+## Steps for Setting Up Servers
 
-- [ ] Uncomment environment references in .github/workflows/main.yml
-- [ ] Test deployment by pushing a minor change to main branch
+1. Add your public key to the authorized_keys file on your servers:
 
-For detailed instructions, see [Deployment Secrets Guide](.github/DEPLOYMENT_SECRETS.md)
+```bash
+# Replace with your actual server details
+ssh-copy-id -i ~/.ssh/heart-disease-deploy/deploy_key.pub user@staging-server
+ssh-copy-id -i ~/.ssh/heart-disease-deploy/deploy_key.pub user@production-server
+```
+
+2. Create the project directory on both servers:
+
+```bash
+ssh user@staging-server "mkdir -p ~/heart-disease-mlp"
+ssh user@production-server "mkdir -p ~/heart-disease-mlp"
+```
+
+3. Make sure Docker and Docker Compose are installed on both servers
+
+## Testing Deployment
+
+After adding all secrets to GitHub:
+
+1. Make a minor change to any file
+2. Commit and push to the main branch
+3. Go to the GitHub Actions tab to monitor the workflow execution
+
+## Your Generated SSH Key
+
+You've successfully generated:
+- Public key: ~/.ssh/heart-disease-deploy/deploy_key.pub
+- Private key: ~/.ssh/heart-disease-deploy/deploy_key
+
+The public key should be added to your servers, and the private key content should be added as the `SSH_PRIVATE_KEY` secret in GitHub.
