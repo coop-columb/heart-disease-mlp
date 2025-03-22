@@ -1,5 +1,5 @@
 services:
-  # A Docker web service
+  # A Docker web service for Heart Disease Prediction API
   - type: web
     name: heart-disease-prediction-api
     runtime: docker
