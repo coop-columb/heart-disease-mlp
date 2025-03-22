@@ -1,0 +1,58 @@
+name: Fix Package Dependencies
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-dependency-file:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install flexible dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-flexible.txt
+
+    - name: Run basic tests with flexible dependencies
+      run: |
+        mkdir -p data/processed models
+        pytest tests/test_models.py::test_build_sklearn_mlp tests/test_models.py::test_build_keras_mlp tests/test_models.py::test_combine_predictions tests/test_models.py::test_interpret_prediction tests/test_data.py::test_binarize_target tests/test_data.py::test_create_preprocessing_pipeline tests/test_data.py::test_create_feature_interactions
+
+    - name: Use flexible requirements for CI/CD
+      run: |
+        # Back up the original requirements.txt
+        cp requirements.txt requirements.txt.bak
+
+        # Replace with flexible requirements
+        cp requirements-flexible.txt requirements.txt
+
+        echo "Successfully updated to flexible requirements"
+
+    - name: Create PR for dependency fix
+      uses: peter-evans/create-pull-request@v5
+      with:
+        commit-message: "fix: update requirements to be more flexible"
+        title: "Fix: Update dependency requirements to be more flexible"
+        body: |
+          ## Dependency Update
+
+          This PR updates the requirements.txt file to use more flexible versioning, which will:
+
+          - Fix CI/CD pipeline failures due to exact version constraints
+          - Make the project compatible with different systems and architectures
+          - Still maintain minimum version requirements for security and functionality
+
+          The specific versions are replaced with ">=" version specifiers to ensure backward compatibility while allowing newer versions to be used.
+
+          ### Test Results
+
+          The PR has been tested with the new flexible dependencies and passes all the core tests.
+        branch: fix/flexible-dependencies
+        base: main
