@@ -195,16 +195,16 @@ async def get_model_info():
         # Check available models
         models_available = []
 
-        if model_predictor.sklearn_model is not None:
+        if model_predictor.has_sklearn_model:
             models_available.append("scikit-learn MLP")
 
-        if model_predictor.keras_model is not None:
+        if model_predictor.has_keras_model:
             models_available.append("Keras MLP")
 
         # Construct response
         response = {
             "models_available": models_available,
-            "ensemble_available": len(models_available) > 1,
+            "ensemble_available": model_predictor.has_ensemble_model,
             "preprocessor_available": model_predictor.preprocessor is not None,
         }
 

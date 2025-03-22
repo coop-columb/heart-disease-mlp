@@ -34,6 +34,9 @@ class HeartDiseasePredictor:
         self.sklearn_model = None
         self.keras_model = None
         self.preprocessor = None
+        self.has_sklearn_model = False
+        self.has_keras_model = False
+        self.has_ensemble_model = False
 
         # Load models
         self.load_models()
@@ -47,16 +50,20 @@ class HeartDiseasePredictor:
             sklearn_path = os.path.join(self.model_dir, "sklearn_mlp_model.joblib")
             if os.path.exists(sklearn_path):
                 self.sklearn_model = joblib.load(sklearn_path)
+                self.has_sklearn_model = True
                 logger.info("Loaded scikit-learn model")
             else:
+                self.has_sklearn_model = False
                 logger.warning(f"scikit-learn model not found at {sklearn_path}")
 
             # Load Keras model
             keras_path = os.path.join(self.model_dir, "keras_mlp_model.h5")
             if os.path.exists(keras_path):
                 self.keras_model = keras.models.load_model(keras_path)
+                self.has_keras_model = True
                 logger.info("Loaded Keras model")
             else:
+                self.has_keras_model = False
                 logger.warning(f"Keras model not found at {keras_path}")
 
             # Load preprocessor
@@ -147,6 +154,7 @@ class HeartDiseasePredictor:
             combined_probas = combine_predictions(sklearn_probas, keras_probas, method="mean")
             combined_preds = (combined_probas >= 0.5).astype(int)
 
+            self.has_ensemble_model = True
             results["ensemble_predictions"] = combined_preds
             if return_probabilities:
                 results["ensemble_probabilities"] = combined_probas
