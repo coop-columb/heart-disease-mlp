@@ -10,6 +10,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MODEL_DIR=/app/models \
     PORT=8000
 
+# Print environment variables during build for debugging
+RUN echo "Environment variables set: PORT=${PORT}, MODEL_DIR=${MODEL_DIR}"
+
 # Copy requirements file
 COPY requirements.txt .
 
