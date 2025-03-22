@@ -1,0 +1,167 @@
+name: Docker CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest pytest-cov black isort flake8
+
+    - name: Lint with flake8
+      run: |
+        flake8 src api tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src api tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Check formatting with black
+      run: |
+        black --check src api tests
+
+    - name: Verify import order with isort
+      run: |
+        isort --check-only --profile black src api tests
+
+    - name: Run unit tests
+      run: |
+        python -c "import os; os.makedirs('data/processed', exist_ok=True); os.makedirs('models', exist_ok=True)"
+        pytest -v tests/test_models.py::test_build_sklearn_mlp tests/test_models.py::test_build_keras_mlp tests/test_models.py::test_combine_predictions tests/test_models.py::test_interpret_prediction tests/test_data.py::test_binarize_target tests/test_data.py::test_create_preprocessing_pipeline tests/test_data.py::test_create_feature_interactions
+
+  build-and-test-docker:
+    name: Build and Test Docker Image
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: heart-disease-mlp:test
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker container
+        run: |
+          # Create test directories and transfer test data if needed
+          mkdir -p ${PWD}/data/processed
+          mkdir -p ${PWD}/models
+
+          # Run container in detached mode with health check
+          docker run -d --name api-test -p 8000:8000 \
+            -v ${PWD}/data:/app/data \
+            -v ${PWD}/models:/app/models \
+            heart-disease-mlp:test
+
+          # Wait for API to start
+          sleep 10
+
+          # Check if container is running
+          docker ps | grep api-test
+
+          # Verify API is responding
+          curl -s http://localhost:8000/health || (docker logs api-test && exit 1)
+
+          # Clean up
+          docker stop api-test
+          docker rm api-test
+
+  publish-docker:
+    name: Publish Docker Image
+    needs: build-and-test-docker
+    # Only run on main branch pushes or manual workflow run
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Optional deployment job - only included if you have a production server
+  # Uncomment and configure if you have a deployment target
+  # deploy-production:
+  #   name: Deploy to Production
+  #   needs: publish-docker
+  #   if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   steps:
+  #     - name: Deploy to production server
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.PRODUCTION_HOST }}
+  #         username: ${{ secrets.PRODUCTION_USERNAME }}
+  #         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+  #         script: |
+  #           # Pull the latest image
+  #           docker pull ghcr.io/${{ github.repository }}:latest
+  #
+  #           # Stop and remove existing container
+  #           docker stop heart-disease-api || true
+  #           docker rm heart-disease-api || true
+  #
+  #           # Run new container
+  #           docker run -d \
+  #             --name heart-disease-api \
+  #             --restart unless-stopped \
+  #             -p 8000:8000 \
+  #             -v ~/heart-disease-mlp/data:/app/data \
+  #             -v ~/heart-disease-mlp/models:/app/models \
+  #             ghcr.io/${{ github.repository }}:latest
