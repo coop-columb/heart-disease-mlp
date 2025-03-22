@@ -4,10 +4,11 @@ This guide will help you deploy your Heart Disease Prediction System on Railway.
 
 ## Pre-requisites
 
-You mentioned you already have a Railway account, which is great! If you haven't already, make sure to:
+You need a Railway account to deploy your app. If you haven't already, make sure to:
 
-1. Connect your GitHub account to Railway
-2. Install the Railway CLI (optional but useful)
+1. Create a Railway account at https://railway.app
+2. Connect your GitHub account to Railway
+3. Install the Railway CLI (optional but useful for local testing)
    ```bash
    npm i -g @railway/cli
    ```
@@ -34,9 +35,9 @@ Railway will now:
 - Deploy the application
 - Provide you with a public URL
 
-### Option 2: Using GitHub Actions to Deploy to Railway
+### Option 2: Using GitHub Actions to Deploy to Railway (CI/CD Method)
 
-You can also modify your GitHub Actions workflow to deploy to Railway:
+We've implemented an automated GitHub Actions workflow to deploy to Railway:
 
 1. Get a Railway API key:
    - Go to Railway dashboard -> Settings -> API Tokens
@@ -46,7 +47,14 @@ You can also modify your GitHub Actions workflow to deploy to Railway:
    - Name: `RAILWAY_TOKEN`
    - Value: Your Railway API token
 
-3. Add a new file `.github/workflows/railway-deploy.yml`:
+3. The deployment workflow is in `.github/workflows/railway-deploy.yml` and includes:
+   - Basic testing to ensure code quality
+   - Node.js setup for Railway CLI
+   - Explicit login with the Railway CLI using the token
+   - Project linking or creation if needed
+   - Verification of railway.json configuration
+   - Deployment with verbose logging
+   - Status check after deployment
 
 ```yaml
 name: Deploy to Railway
@@ -54,20 +62,59 @@ name: Deploy to Railway
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/RAILWAY_DEPLOYMENT.md'
   workflow_dispatch:
 
 jobs:
-  deploy:
+  # Basic testing job omitted for brevity
+  
+  deploy-to-railway:
+    name: Deploy to Railway
+    needs: lint-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Install Railway CLI
         run: npm i -g @railway/cli
+        
+      - name: Verify Railway CLI installation
+        run: railway --version
+
+      - name: Check Railway token
+        run: |
+          # DON'T PRINT THE TOKEN, just check if it's set
+          if [ -n "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN is set"
+          else
+            echo "RAILWAY_TOKEN is not set"
+            exit 1
+          fi
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Deploy to Railway
-        run: railway up
+        id: deploy
+        run: |
+          # Explicitly login with browserless mode
+          railway login --browserless
+          
+          # Try to link to an existing project or create a new one
+          railway link --yes || railway init --name heart-disease-prediction
+          
+          # Deploy with verbose output to help debug issues
+          railway up --verbose --detach
+          
+          # Get deployment status
+          railway status
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 ```
