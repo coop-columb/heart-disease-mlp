@@ -83,10 +83,10 @@ If the GitHub Action workflow fails, follow these debugging steps:
    ```bash
    # Login to Railway
    railway login
-   
+
    # Link to project
    railway link
-   
+
    # Try deploying
    railway up
    ```
@@ -133,3 +133,4 @@ railway projects
 # List all environments
 railway environments
 ```
+
