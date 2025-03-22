@@ -1,0 +1,28 @@
+INFO:     Will watch for changes in these directories: ['/Users/root1/DataScience_Projects/heart-disease-mlp']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [23654] using StatReload
+2025-03-21 20:04:35,453 - src.models.predict_model - INFO - Loading models from models
+2025-03-21 20:04:35,454 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-21 20:04:35,474 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-21 20:04:35,475 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-21 20:04:35,475 - src.models.predict_model - WARNING - Preprocessor not found at data/processed/preprocessor.joblib
+/Users/root1/DataScience_Projects/heart-disease-mlp/venv/lib/python3.10/site-packages/pydantic/_internal/_config.py:345: UserWarning: Valid config keys have changed in V2:
+* 'schema_extra' has been renamed to 'json_schema_extra'
+  warnings.warn(message, UserWarning)
+INFO:     Started server process [23659]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:54978 - "GET /health HTTP/1.1" 200 OK
+2025-03-21 20:05:10,345 - api.app - INFO - Received model info request
+INFO:     127.0.0.1:54980 - "GET /models/info HTTP/1.1" 200 OK
+2025-03-21 20:05:10,348 - api.app - INFO - Received prediction request
+2025-03-21 20:05:10,348 - src.models.predict_model - INFO - Making predictions
+2025-03-21 20:05:10,348 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-21 20:05:10,348 - src.models.predict_model - WARNING - Preprocessor not available. Using raw input data.
+2025-03-21 20:05:10,348 - api.app - ERROR - Error making prediction: X has 13 features, but MLPClassifier is expecting 25 features as input.
+INFO:     127.0.0.1:54982 - "POST /predict HTTP/1.1" 500 Internal Server Error
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [23659]
+INFO:     Stopping reloader process [23654]

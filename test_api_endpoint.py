@@ -1,0 +1,40 @@
+# \!/usr/bin/env python
+import json
+
+import requests
+
+# Define base URL
+base_url = "http://localhost:8000"
+
+# Test health endpoint
+response = requests.get(f"{base_url}/health")
+print("Health endpoint response:", response.status_code)
+print(response.json())
+print()
+
+# Test model info endpoint
+response = requests.get(f"{base_url}/models/info")
+print("Model info endpoint response:", response.status_code)
+print(json.dumps(response.json(), indent=2))
+print()
+
+# Test prediction endpoint
+patient_data = {
+    "age": 61,
+    "sex": 1,
+    "cp": 3,
+    "trestbps": 140,
+    "chol": 240,
+    "fbs": 1,
+    "restecg": 1,
+    "thalach": 150,
+    "exang": 1,
+    "oldpeak": 2.4,
+    "slope": 2,
+    "ca": 1,
+    "thal": 3,
+}
+
+response = requests.post(f"{base_url}/predict", json=patient_data)
+print("Prediction endpoint response:", response.status_code)
+print(json.dumps(response.json(), indent=2))
