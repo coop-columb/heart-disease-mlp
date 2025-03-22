@@ -1,0 +1,76 @@
+name: Model Retraining and Evaluation
+
+on:
+  schedule:
+    # Run monthly, on the 1st at 3am
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+
+jobs:
+  retrain-models:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Download latest data
+      run: |
+        ./scripts/get_data.sh
+
+    - name: Process data
+      run: |
+        ./scripts/process_data.sh
+
+    - name: Train models
+      run: |
+        ./scripts/train_models.sh
+
+    - name: Setup Git
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+
+    - name: Create model update branch
+      run: |
+        current_date=$(date +"%Y-%m-%d")
+        git checkout -b model-update-${current_date}
+
+    - name: Commit model updates
+      run: |
+        git add models/*.joblib models/*.h5 models/evaluation_results.joblib
+        git commit -m "chore: update model weights from automated retraining" || echo "No changes to commit"
+
+    - name: Push changes
+      run: |
+        git push origin HEAD
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        title: "Model Update: Automated Retraining Results"
+        body: |
+          ## Automated Model Retraining
+
+          This PR contains updated model weights and evaluation metrics from the scheduled retraining pipeline.
+
+          ### Evaluation Results
+
+          The updated models should be reviewed for performance changes before merging.
+
+          ### Deployment Impact
+
+          After merging, the updated models will be deployed in the next CI/CD pipeline run.
+        labels: model-update, automated-pr
+        branch: model-update-$(date +"%Y-%m-%d")
+        base: main
