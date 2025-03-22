@@ -38,7 +38,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload dependency scan results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-scan-results
         path: pip-audit-results.json
@@ -80,7 +80,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload security scan results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-scan-results
         path: |
@@ -115,7 +115,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload code quality results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: code-quality-results
         path: |
@@ -164,7 +164,7 @@ jobs:
         sarif_file: 'trivy-results.sarif'
 
     - name: Upload Trivy text report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: docker-security-results
         path: trivy-results.txt
@@ -174,7 +174,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Generate combined security report
       run: |
@@ -223,7 +223,7 @@ jobs:
         cat security-report.md
 
     - name: Upload security summary report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-summary-report
         path: security-report.md
