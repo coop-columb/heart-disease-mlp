@@ -8,8 +8,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import (auc, average_precision_score, confusion_matrix,
-                             precision_recall_curve, roc_curve)
+from sklearn.metrics import (
+    auc,
+    average_precision_score,
+    confusion_matrix,
+    precision_recall_curve,
+    roc_curve,
+)
 
 
 def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, figsize=(8, 6)):

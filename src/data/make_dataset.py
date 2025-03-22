@@ -10,14 +10,20 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src.data.preprocess import (binarize_target,
-                                 create_preprocessing_pipeline,
-                                 handle_missing_values, load_data, split_data)
-from src.features.feature_engineering import (calculate_cardiovascular_age,
-                                              create_feature_interactions,
-                                              create_medical_risk_score,
-                                              normalize_categorical_levels,
-                                              select_features)
+from src.data.preprocess import (
+    binarize_target,
+    create_preprocessing_pipeline,
+    handle_missing_values,
+    load_data,
+    split_data,
+)
+from src.features.feature_engineering import (
+    calculate_cardiovascular_age,
+    create_feature_interactions,
+    create_medical_risk_score,
+    normalize_categorical_levels,
+    select_features,
+)
 from src.utils import load_config
 
 # Configure logging
