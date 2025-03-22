@@ -9,19 +9,31 @@ import os
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                             recall_score, roc_auc_score)
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from tensorflow import keras
 
 from src.models.hyperparameter_tuning import tune_keras_mlp, tune_sklearn_mlp
-from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
-                                  combine_predictions, evaluate_keras_mlp,
-                                  evaluate_sklearn_mlp, train_keras_mlp,
-                                  train_sklearn_mlp)
+from src.models.mlp_model import (
+    build_keras_mlp,
+    build_sklearn_mlp,
+    combine_predictions,
+    evaluate_keras_mlp,
+    evaluate_sklearn_mlp,
+    train_keras_mlp,
+    train_sklearn_mlp,
+)
 from src.utils import load_config
-from src.visualization.visualize import (plot_confusion_matrix,
-                                         plot_precision_recall_curve,
-                                         plot_roc_curve)
+from src.visualization.visualize import (
+    plot_confusion_matrix,
+    plot_precision_recall_curve,
+    plot_roc_curve,
+)
 
 # Configure logging
 logging.basicConfig(

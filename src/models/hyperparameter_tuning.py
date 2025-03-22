@@ -12,16 +12,19 @@ import numpy as np
 import optuna
 import pandas as pd
 import tensorflow as tf
-from optuna.visualization import (plot_optimization_history,
-                                  plot_param_importances)
-from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                             recall_score, roc_auc_score)
+from optuna.visualization import plot_optimization_history, plot_param_importances
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from tensorflow import keras
 from tensorflow.keras import callbacks, layers
 
-from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
-                                  train_keras_mlp)
+from src.models.mlp_model import build_keras_mlp, build_sklearn_mlp, train_keras_mlp
 
 # Configure logging
 logging.basicConfig(
