@@ -55,24 +55,16 @@ class PatientData(BaseModel):
     age: int = Field(..., description="Age in years", example=61)
     sex: int = Field(..., description="Gender (0=female, 1=male)", example=1)
     cp: int = Field(..., description="Chest pain type (1-4)", example=3)
-    trestbps: int = Field(
-        ..., description="Resting blood pressure (mm Hg)", example=140
-    )
+    trestbps: int = Field(..., description="Resting blood pressure (mm Hg)", example=140)
     chol: int = Field(..., description="Serum cholesterol (mg/dl)", example=240)
     fbs: int = Field(
         ..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)", example=1
     )
     restecg: int = Field(..., description="Resting ECG results (0-2)", example=1)
     thalach: int = Field(..., description="Maximum heart rate achieved", example=150)
-    exang: int = Field(
-        ..., description="Exercise induced angina (0=no, 1=yes)", example=1
-    )
-    oldpeak: float = Field(
-        ..., description="ST depression induced by exercise", example=2.4
-    )
-    slope: int = Field(
-        ..., description="Slope of the peak exercise ST segment (1-3)", example=2
-    )
+    exang: int = Field(..., description="Exercise induced angina (0=no, 1=yes)", example=1)
+    oldpeak: float = Field(..., description="ST depression induced by exercise", example=2.4)
+    slope: int = Field(..., description="Slope of the peak exercise ST segment (1-3)", example=2)
     ca: int = Field(
         ...,
         description="Number of major vessels colored by fluoroscopy (0-3)",
@@ -110,9 +102,7 @@ class PredictionResponse(BaseModel):
     prediction: int = Field(..., description="Heart disease prediction (0=no, 1=yes)")
     probability: float = Field(..., description="Probability of heart disease")
     risk_level: str = Field(..., description="Risk level assessment")
-    interpretation: Optional[str] = Field(
-        None, description="Clinical interpretation of prediction"
-    )
+    interpretation: Optional[str] = Field(None, description="Clinical interpretation of prediction")
 
 
 # Define API endpoints
@@ -222,9 +212,7 @@ async def get_model_info():
 
     except Exception as e:
         logger.error(f"Error getting model info: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Error getting model info: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error getting model info: {str(e)}")
 
 
 if __name__ == "__main__":

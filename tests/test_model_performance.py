@@ -11,8 +11,7 @@ import joblib
 import numpy as np
 import pytest
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import (accuracy_score, precision_score, recall_score,
-                             roc_auc_score)
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -125,11 +124,7 @@ def test_model_calibration(test_data, predictor):
             _, y_proba = predictor.predict_sklearn(X_test)
         elif model_name == "keras" and predictor.has_keras_model:
             _, y_proba = predictor.predict_keras(X_test)
-        elif (
-            model_name == "ensemble"
-            and predictor.has_sklearn_model
-            and predictor.has_keras_model
-        ):
+        elif model_name == "ensemble" and predictor.has_sklearn_model and predictor.has_keras_model:
             try:
                 _, y_proba = predictor.predict_ensemble(X_test)
             except Exception:
@@ -173,9 +168,7 @@ def test_model_calibration(test_data, predictor):
             f"exceeds threshold {threshold}"
         )
 
-        print(
-            f"\n{model_name.upper()} model calibration error: {mean_calibration_error:.4f}"
-        )
+        print(f"\n{model_name.upper()} model calibration error: {mean_calibration_error:.4f}")
 
 
 def test_model_fairness(test_data, predictor):
@@ -203,9 +196,7 @@ def test_model_fairness(test_data, predictor):
 
                 # Skip if insufficient samples in either group
                 if sum(male_indices) < 10 or sum(female_indices) < 10:
-                    warnings.warn(
-                        "Insufficient samples to test fairness across gender groups"
-                    )
+                    warnings.warn("Insufficient samples to test fairness across gender groups")
                     return
 
                 # Make predictions
@@ -213,12 +204,8 @@ def test_model_fairness(test_data, predictor):
                     y_pred, _ = predictor.predict_sklearn(X_test)
 
                     # Calculate accuracy for each group
-                    male_accuracy = accuracy_score(
-                        y_test[male_indices], y_pred[male_indices]
-                    )
-                    female_accuracy = accuracy_score(
-                        y_test[female_indices], y_pred[female_indices]
-                    )
+                    male_accuracy = accuracy_score(y_test[male_indices], y_pred[male_indices])
+                    female_accuracy = accuracy_score(y_test[female_indices], y_pred[female_indices])
 
                     # Check that accuracy difference is within an acceptable range
                     accuracy_diff = abs(male_accuracy - female_accuracy)

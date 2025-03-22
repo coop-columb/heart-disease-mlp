@@ -97,9 +97,7 @@ class HeartDiseasePredictor:
             logger.warning("Preprocessor not available. Using raw input data.")
             return patient_df.values
 
-    def predict(
-        self, patient_data, return_probabilities=True, return_interpretation=False
-    ):
+    def predict(self, patient_data, return_probabilities=True, return_interpretation=False):
         """
         Make predictions for patient data.
 
@@ -118,9 +116,7 @@ class HeartDiseasePredictor:
         if isinstance(patient_data, dict):
             original_data = patient_data
         else:
-            original_data = (
-                patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
-            )
+            original_data = patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
 
         # Preprocess input
         X = self.preprocess_input(patient_data)
@@ -148,9 +144,7 @@ class HeartDiseasePredictor:
 
         # Combine predictions if both models are available
         if self.sklearn_model is not None and self.keras_model is not None:
-            combined_probas = combine_predictions(
-                sklearn_probas, keras_probas, method="mean"
-            )
+            combined_probas = combine_predictions(sklearn_probas, keras_probas, method="mean")
             combined_preds = (combined_probas >= 0.5).astype(int)
 
             results["ensemble_predictions"] = combined_preds

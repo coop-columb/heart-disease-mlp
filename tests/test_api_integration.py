@@ -67,9 +67,7 @@ def test_complete_api_flow(client, sample_patients_batch):
 
         if keras_available:
             # Test keras model endpoint
-            keras_response = client.post(
-                "/predict", json=patient_data, params={"model": "keras"}
-            )
+            keras_response = client.post("/predict", json=patient_data, params={"model": "keras"})
             assert keras_response.status_code == 200
             keras_data = keras_response.json()
             assert "model_used" in keras_data

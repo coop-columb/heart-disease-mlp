@@ -4,20 +4,18 @@ MLP model implementations for the Heart Disease Prediction project.
 
 import logging
 import os
-from typing import (Any, Dict, List,  # Optional, Union used in development
-                    Tuple)
+from typing import Any, Dict, List, Tuple  # Optional, Union used in development
 
 # import joblib  # Used for model persistence
 import matplotlib.pyplot as plt
 import numpy as np
+
 # import pandas as pd  # Used for dataframe processing
 # import tensorflow as tf  # Core TF functionality
-from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                             recall_score, roc_auc_score)
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from tensorflow import keras
-from tensorflow.keras import (layers,  # callbacks used for model training
-                              regularizers)
+from tensorflow.keras import layers, regularizers  # callbacks used for model training
 
 # Configure logging
 logging.basicConfig(
@@ -107,9 +105,7 @@ def train_sklearn_mlp(
         "train_auc": roc_auc_score(y_train, y_pred_proba),
     }
 
-    logger.info(
-        f"Train: Acc={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}"
-    )
+    logger.info(f"Train: Acc={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}")
 
     # Validation metrics if validation data is provided
     if X_val is not None and y_val is not None:
@@ -124,9 +120,7 @@ def train_sklearn_mlp(
             "val_auc": roc_auc_score(y_val, y_val_pred_proba),
         }
 
-        logger.info(
-            f"Val: Acc={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}"
-        )
+        logger.info(f"Val: Acc={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}")
 
     return model
 
@@ -231,9 +225,7 @@ def train_keras_mlp(
     Returns:
         Tuple of (trained model, training history)
     """
-    logger.info(
-        f"Training Keras MLP for up to {epochs} epochs (batch size: {batch_size})"
-    )
+    logger.info(f"Training Keras MLP for up to {epochs} epochs (batch size: {batch_size})")
 
     # Callbacks
     callbacks_list = []
@@ -290,9 +282,7 @@ def train_keras_mlp(
     return model, history
 
 
-def plot_training_history(
-    history: Dict[str, List], save_path: str = None
-) -> plt.Figure:
+def plot_training_history(history: Dict[str, List], save_path: str = None) -> plt.Figure:
     """
     Plot the training history of a Keras model.
 
@@ -548,9 +538,7 @@ def interpret_prediction(
             has_risk_factors = True
 
         if has_risk_factors:
-            interpretation.append(
-                "\nSome risk factors present, but overall risk is low."
-            )
+            interpretation.append("\nSome risk factors present, but overall risk is low.")
             interpretation.append("\nRecommendations:")
             interpretation.append("- Continue regular check-ups")
             interpretation.append("- Maintain heart-healthy lifestyle")

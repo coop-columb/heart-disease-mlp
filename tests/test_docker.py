@@ -11,9 +11,7 @@ import requests
 
 # Skip these tests if Docker is not installed
 docker_installed = (
-    subprocess.run(
-        ["which", "docker"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    ).returncode
+    subprocess.run(["which", "docker"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
     == 0
 )
 
@@ -214,9 +212,7 @@ def test_docker_model_persistence(docker_container, sample_patient_data):
     # Make multiple predictions and check consistency
     results = []
     for _ in range(3):
-        response = requests.post(
-            "http://localhost:8000/predict", json=sample_patient_data
-        )
+        response = requests.post("http://localhost:8000/predict", json=sample_patient_data)
         assert response.status_code == 200
         results.append(response.json())
 

@@ -55,9 +55,7 @@ def download_dataset(output_dir="data/raw", validate_hash=True):
     expected_hashes = {
         "cleveland": "3e2093b6a81fe5e6a2169ace8d19c9a9939251fe9ac3a24b779bcf4d2c0a72ee",
         "hungarian": "f982fa083fd587f42f0e59c767ae59a8f37b16d22c87db1dec7e8a8df5b66900",
-        "switzerland": (
-            "5d6a616f9e32a478c6b93e5d162a9ce6a3b91e3c736c6c6c9ea5c838659c42a9"
-        ),
+        "switzerland": ("5d6a616f9e32a478c6b93e5d162a9ce6a3b91e3c736c6c6c9ea5c838659c42a9"),
         "va": "de0c3320a94f5d4de567c97d2f8fd203a478b1f1da95e9c3ea4788c25c884bd9",
     }
 
@@ -94,9 +92,7 @@ def download_dataset(output_dir="data/raw", validate_hash=True):
             if validate_hash:
                 file_hash = compute_file_hash(output_file)
                 if file_hash == expected_hashes[dataset_name]:
-                    logger.info(
-                        f"Hash validation successful for {dataset_name} dataset"
-                    )
+                    logger.info(f"Hash validation successful for {dataset_name} dataset")
                 else:
                     logger.warning(
                         f"Hash validation failed for {dataset_name} dataset. "
@@ -105,9 +101,7 @@ def download_dataset(output_dir="data/raw", validate_hash=True):
                     )
 
             # Read the data and add column names
-            df = pd.read_csv(
-                output_file, header=None, names=column_names, na_values="?"
-            )
+            df = pd.read_csv(output_file, header=None, names=column_names, na_values="?")
 
             # Save with column names
             df.to_csv(output_file, index=False)
