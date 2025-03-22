@@ -33,7 +33,7 @@ This PR addresses various issues in the codebase, making it more robust and main
 
 ### Configuration
 - Removed duplicate docker-compose.yml file in favor of more feature-rich yaml version
-- Enhanced render.yaml configuration
+- Simplified deployment configuration
 
 ## Test plan
 1. Run all tests with pytest to verify they pass
