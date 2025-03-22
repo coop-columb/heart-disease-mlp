@@ -167,18 +167,32 @@ jobs:
   deploy-staging:
     needs: build-and-push
     runs-on: ubuntu-latest
-    # Only run if DEPLOY_HOST is configured (makes deployment optional)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.DEPLOY_HOST != ''
+    # Only run if pushing to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Staging deployment is controlled by required secret environment variables
 
     steps:
     - uses: actions/checkout@v3
 
+    - name: Check required secrets
+      id: check_secrets
+      run: |
+        if [[ -z "${{ secrets.DEPLOY_HOST }}" || -z "${{ secrets.DEPLOY_USER }}" || -z "${{ secrets.SSH_PRIVATE_KEY }}" ]]; then
+          echo "Required secrets for staging deployment are missing. Skipping deployment."
+          echo "skip_deployment=true" >> $GITHUB_OUTPUT
+        else
+          echo "All required secrets are available."
+          echo "skip_deployment=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Set up SSH
+      if: steps.check_secrets.outputs.skip_deployment != 'true'
       uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy to staging server
+      if: steps.check_secrets.outputs.skip_deployment != 'true'
       env:
         CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
         DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -211,8 +225,9 @@ jobs:
   deploy-production:
     needs: deploy-staging
     runs-on: ubuntu-latest
-    # Only run if PROD_DEPLOY_HOST is configured (makes deployment optional)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.PROD_DEPLOY_HOST != ''
+    # Only run if pushing to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Production deployment is controlled by required secret environment variables
 
     steps:
     - name: Manual approval for production deployment
@@ -220,12 +235,25 @@ jobs:
 
     - uses: actions/checkout@v3
 
+    - name: Check required secrets
+      id: check_secrets
+      run: |
+        if [[ -z "${{ secrets.PROD_DEPLOY_HOST }}" || -z "${{ secrets.PROD_DEPLOY_USER }}" || -z "${{ secrets.SSH_PRIVATE_KEY }}" ]]; then
+          echo "Required secrets for production deployment are missing. Skipping deployment."
+          echo "skip_deployment=true" >> $GITHUB_OUTPUT
+        else
+          echo "All required secrets are available."
+          echo "skip_deployment=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Set up SSH
+      if: steps.check_secrets.outputs.skip_deployment != 'true'
       uses: webfactory/ssh-agent@v0.7.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy to production server
+      if: steps.check_secrets.outputs.skip_deployment != 'true'
       env:
         CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
         DEPLOY_HOST: ${{ secrets.PROD_DEPLOY_HOST }}
