@@ -1,0 +1,12 @@
+services:
+  # A Docker web service
+  - type: web
+    name: heart-disease-prediction-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: MODEL_DIR
+        value: /app/models
