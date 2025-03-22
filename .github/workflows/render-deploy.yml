@@ -1,0 +1,72 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check for render.yaml
+        id: check_render_yaml
+        run: |
+          if [ -f "render.yaml" ]; then
+            echo "render_yaml_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "render_yaml_exists=false" >> $GITHUB_OUTPUT
+            echo "render.yaml file not found. Creating default configuration."
+          fi
+
+      - name: Create render.yaml if missing
+        if: steps.check_render_yaml.outputs.render_yaml_exists == 'false'
+        run: |
+          cat > render.yaml <<EOF
+          services:
+            - type: web
+              name: heart-disease-mlp
+              env: docker
+              repo: https://github.com/${{ github.repository }}
+              region: ohio
+              plan: free
+              branch: main
+              dockerfilePath: ./Dockerfile
+              envVars:
+                - key: PORT
+                  value: 8000
+                - key: MODEL_PATH
+                  value: /app/models/
+                - key: LOG_LEVEL
+                  value: INFO
+                - key: ENVIRONMENT
+                  value: production
+              healthCheckPath: /health
+          EOF
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add render.yaml
+          git commit -m "Add render.yaml configuration"
+          git push origin ${{ github.ref_name }}
+
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "RENDER_API_KEY is not set. Skipping deployment to Render."
+            exit 0
+          fi
+
+          # Install Render CLI if needed
+          if ! command -v render &> /dev/null; then
+            echo "Installing Render CLI..."
+            npm install -g @render/cli
+          fi
+
+          # Deploy using render-cli
+          echo "Deploying to Render..."
+          render deploy --yaml render.yaml
