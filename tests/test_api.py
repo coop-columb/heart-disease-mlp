@@ -9,8 +9,12 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-# Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Reset path and add project root to path to avoid conflicts with other projects
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Filter out any paths related to EmotionAdaptiveMusic
+sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
+sys.path.insert(0, project_root)
 
 from api.app import app
 
