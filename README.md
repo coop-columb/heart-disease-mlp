@@ -330,37 +330,10 @@ heart-disease-mlp/
    ./scripts/test_api.sh
    ```
 
-### Cloud Deployment with Render
+### Cloud Deployment
 
-1. **Automatic Deployment**
-
-   This project includes a Render deployment configuration. To deploy to Render:
-
-   - Fork or clone this repository to your GitHub account
-   - Create an account on [Render](https://render.com/)
-   - Connect your GitHub account to Render
-   - Create a new Web Service, selecting the repository
-   - Choose "Deploy from a Blueprint" and select render.yaml
-   - Set up environment variables in the Render dashboard
-
-2. **Manual Deployment Scripts**
-
-   For manual deployments, use the provided scripts:
-
-   ```bash
-   # Deploy to Render
-   ./scripts/deploy_api.sh render
-
-   # Test the Render deployment locally
-   ./scripts/render_local_test.sh
-   ```
-
-3. **CI/CD Integration**
-
-   The GitHub Actions workflow will automatically deploy to Render when changes are pushed to the main branch. To enable this:
-
-   - Add your `RENDER_API_KEY` to the repository secrets
-   - The workflow will handle creating the necessary configuration if missing
+For cloud deployment, this project uses Docker container images pushed to GitHub Container Registry (ghcr.io).
+Refer to the GitHub Actions workflow configuration and deployment scripts for details on deploying to your chosen environment.
 
 ## CI/CD Pipeline
 
