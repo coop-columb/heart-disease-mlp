@@ -5,8 +5,10 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /health
+    dockerfilePath: ./Dockerfile  # Explicitly point to Dockerfile
     envVars:
       - key: PORT
         value: 8000
       - key: MODEL_DIR
         value: /app/models
+    autoDeploy: true  # Enable auto-deployment from git
