@@ -48,6 +48,15 @@ jobs:
         run: npm i -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up
+        run: |
+          echo "Logging in to Railway with token..."
+          railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+          echo "Creating new project if it doesn't exist..."
+          # Try to link first, and if it fails, create a new project
+          railway link || railway init --name heart-disease-prediction
+
+          echo "Deploying to Railway..."
+          railway up --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
