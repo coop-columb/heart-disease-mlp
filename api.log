@@ -26,3 +26,507 @@ INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
 INFO:     Finished server process [23659]
 INFO:     Stopping reloader process [23654]
+2025-03-22 19:48:09,320 - api.app - INFO - All modules imported successfully
+2025-03-22 19:48:09,321 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:48:09,322 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:48:09,336 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:48:09,336 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:48:09,337 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:48:09,393 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,394 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,394 - api.app - INFO - Received model info request
+2025-03-22 19:48:09,395 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,397 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:48:09,397 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:48:09,397 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:48:09,426 - api.app - INFO - Prediction: 1, Probability: 0.9979, Model: ensemble
+2025-03-22 19:48:09,426 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,428 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,428 - api.app - INFO - Received model info request
+2025-03-22 19:48:09,428 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,429 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:48:09,429 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:48:09,429 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:48:09,446 - api.app - INFO - Prediction: 1, Probability: 0.9897, Model: ensemble
+2025-03-22 19:48:09,447 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,535 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:48:09,535 - api.app - INFO - Prediction: 1, Probability: 0.7500, Model: keras_mlp
+2025-03-22 19:48:09,536 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,537 - api.app - INFO - Received batch prediction request for 1 patients using model: None
+2025-03-22 19:48:09,537 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:48:09,537 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:48:09,553 - httpx - INFO - HTTP Request: POST http://testserver/predict/batch "HTTP/1.1 200 OK"
+2025-03-22 19:48:09,554 - src.data.preprocess - INFO - Binarizing target column: target
+2025-03-22 19:48:09,554 - src.data.preprocess - INFO - Converting target from multiclass to binary
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO - Target distribution after binarization: {1: 4, 0: 1}
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO - Handling missing values
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO - Missing values found:
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO -   age: 1 (20.00%)
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO -   sex: 1 (20.00%)
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO -   chol: 1 (20.00%)
+2025-03-22 19:48:09,555 - src.data.preprocess - INFO - Imputing numerical values with median
+2025-03-22 19:48:09,556 - src.data.preprocess - INFO - Imputing categorical values with most_frequent
+2025-03-22 19:48:09,556 - src.data.preprocess - INFO - Creating preprocessing pipeline
+2025-03-22 19:48:09,556 - src.data.preprocess - INFO - Using median imputer for numerical features
+2025-03-22 19:48:09,557 - src.data.preprocess - INFO - Using RobustScaler for numerical features
+2025-03-22 19:48:09,557 - src.data.preprocess - INFO - Preprocessing pipeline created successfully
+2025-03-22 19:48:09,557 - src.features.feature_engineering - INFO - Creating feature interactions
+2025-03-22 19:48:09,558 - src.features.feature_engineering - INFO - Created new feature interactions: []
+2025-03-22 19:48:09,558 - src.features.feature_engineering - INFO - Creating medical risk score
+2025-03-22 19:48:09,560 - src.features.feature_engineering - INFO - Medical risk score created successfully
+2025-03-22 19:48:16,410 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:48:16,411 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:48:16,419 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:48:16,419 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:48:16,420 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:48:16,420 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:48:16,421 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:48:16,426 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:48:16,427 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:48:16,427 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:48:16,427 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:48:16,428 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:48:16,434 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:48:16,434 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:48:16,435 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:48:16,435 - src.models.mlp_model - INFO - Building scikit-learn MLP with (100, 50) hidden layers
+2025-03-22 19:48:16,435 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:48:16,435 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:48:16,441 - src.models.mlp_model - INFO - Train: Acc=0.5000, AUC=0.5714
+2025-03-22 19:48:16,441 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:48:16,446 - src.models.mlp_model - INFO - Train: Acc=0.5000, AUC=0.5714
+2025-03-22 19:48:16,448 - src.models.mlp_model - INFO - Val: Acc=0.6667, AUC=0.5000
+2025-03-22 19:48:16,449 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:48:16,449 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:48:16,454 - src.models.mlp_model - INFO - Train: Acc=0.4714, AUC=0.4406
+2025-03-22 19:48:16,454 - src.models.mlp_model - INFO - Evaluating scikit-learn MLP model on test data
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO - Test metrics for scikit-learn MLP:
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO -   Accuracy:  0.6000
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO -   Precision: 0.0000
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO -   Recall:    0.0000
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO -   F1 Score:  0.0000
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO -   ROC AUC:   0.5370
+2025-03-22 19:48:16,456 - src.models.mlp_model - INFO - Building Keras MLP with 2 hidden layers
+2025-03-22 19:48:16,467 - src.models.mlp_model - INFO - Model: "functional_8"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input (InputLayer)              │ (None, 10)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_0 (Dense)                 │ (None, 64)             │           704 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_0 (Dropout)             │ (None, 64)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 32)             │         2,080 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 32)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ output (Dense)                  │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 2,817 (11.00 KB)
+ Trainable params: 2,817 (11.00 KB)
+ Non-trainable params: 0 (0.00 B)
+
+2025-03-22 19:49:17,467 - api.app - INFO - All modules imported successfully
+2025-03-22 19:49:17,468 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:49:17,469 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:49:17,483 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:49:17,484 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:49:17,484 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:49:17,543 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,545 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,545 - api.app - INFO - Received model info request
+2025-03-22 19:49:17,546 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,548 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:49:17,548 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:49:17,548 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:49:17,576 - api.app - INFO - Prediction: 1, Probability: 0.9979, Model: ensemble
+2025-03-22 19:49:17,576 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,578 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,578 - api.app - INFO - Received model info request
+2025-03-22 19:49:17,578 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,579 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:49:17,579 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:49:17,579 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:49:17,595 - api.app - INFO - Prediction: 1, Probability: 0.9897, Model: ensemble
+2025-03-22 19:49:17,595 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,597 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:49:17,597 - api.app - INFO - Prediction: 1, Probability: 0.7500, Model: keras_mlp
+2025-03-22 19:49:17,597 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,598 - api.app - INFO - Received batch prediction request for 1 patients using model: None
+2025-03-22 19:49:17,598 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:49:17,598 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:49:17,614 - httpx - INFO - HTTP Request: POST http://testserver/predict/batch "HTTP/1.1 200 OK"
+2025-03-22 19:49:17,615 - src.data.preprocess - INFO - Binarizing target column: target
+2025-03-22 19:49:17,615 - src.data.preprocess - INFO - Converting target from multiclass to binary
+2025-03-22 19:49:17,615 - src.data.preprocess - INFO - Target distribution after binarization: {1: 4, 0: 1}
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO - Handling missing values
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO - Missing values found:
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO -   age: 1 (20.00%)
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO -   sex: 1 (20.00%)
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO -   chol: 1 (20.00%)
+2025-03-22 19:49:17,616 - src.data.preprocess - INFO - Imputing numerical values with median
+2025-03-22 19:49:17,617 - src.data.preprocess - INFO - Imputing categorical values with most_frequent
+2025-03-22 19:49:17,617 - src.data.preprocess - INFO - Creating preprocessing pipeline
+2025-03-22 19:49:17,617 - src.data.preprocess - INFO - Using median imputer for numerical features
+2025-03-22 19:49:17,617 - src.data.preprocess - INFO - Using RobustScaler for numerical features
+2025-03-22 19:49:17,617 - src.data.preprocess - INFO - Preprocessing pipeline created successfully
+2025-03-22 19:49:17,618 - src.features.feature_engineering - INFO - Creating feature interactions
+2025-03-22 19:49:17,618 - src.features.feature_engineering - INFO - Created new feature interactions: []
+2025-03-22 19:49:17,619 - src.features.feature_engineering - INFO - Creating medical risk score
+2025-03-22 19:49:17,620 - src.features.feature_engineering - INFO - Medical risk score created successfully
+2025-03-22 19:49:23,605 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:49:23,606 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:49:23,613 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:49:23,613 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:49:23,613 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:49:23,614 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:49:23,615 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:49:23,622 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:49:23,623 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:49:23,623 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:49:23,625 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:49:23,625 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:49:23,632 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:49:23,632 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:49:23,633 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:49:23,633 - src.models.mlp_model - INFO - Building scikit-learn MLP with (100, 50) hidden layers
+2025-03-22 19:49:23,634 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:49:23,634 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:49:23,639 - src.models.mlp_model - INFO - Train: Acc=0.6000, AUC=0.4005
+2025-03-22 19:49:23,640 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:49:23,644 - src.models.mlp_model - INFO - Train: Acc=0.6000, AUC=0.4005
+2025-03-22 19:49:23,646 - src.models.mlp_model - INFO - Val: Acc=0.5333, AUC=0.5000
+2025-03-22 19:49:23,647 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:49:23,647 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:49:23,652 - src.models.mlp_model - INFO - Train: Acc=0.4714, AUC=0.4693
+2025-03-22 19:49:23,652 - src.models.mlp_model - INFO - Evaluating scikit-learn MLP model on test data
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO - Test metrics for scikit-learn MLP:
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO -   Accuracy:  0.4667
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO -   Precision: 0.0000
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO -   Recall:    0.0000
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO -   F1 Score:  0.0000
+2025-03-22 19:49:23,654 - src.models.mlp_model - INFO -   ROC AUC:   0.3750
+2025-03-22 19:49:23,655 - src.models.mlp_model - INFO - Building Keras MLP with 2 hidden layers
+2025-03-22 19:49:23,665 - src.models.mlp_model - INFO - Model: "functional_8"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input (InputLayer)              │ (None, 10)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_0 (Dense)                 │ (None, 64)             │           704 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_0 (Dropout)             │ (None, 64)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 32)             │         2,080 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 32)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ output (Dense)                  │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 2,817 (11.00 KB)
+ Trainable params: 2,817 (11.00 KB)
+ Non-trainable params: 0 (0.00 B)
+
+2025-03-22 19:50:55,208 - api.app - INFO - All modules imported successfully
+2025-03-22 19:50:55,209 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:50:55,210 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:50:55,223 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:50:55,224 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:50:55,224 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:50:55,326 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,327 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,328 - api.app - INFO - Received model info request
+2025-03-22 19:50:55,328 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,330 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:50:55,330 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:50:55,330 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:50:55,358 - api.app - INFO - Prediction: 1, Probability: 0.9979, Model: ensemble
+2025-03-22 19:50:55,358 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,360 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,360 - api.app - INFO - Received model info request
+2025-03-22 19:50:55,361 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,361 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:50:55,362 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:50:55,362 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:50:55,376 - api.app - INFO - Prediction: 1, Probability: 0.9897, Model: ensemble
+2025-03-22 19:50:55,377 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,378 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:50:55,378 - api.app - INFO - Prediction: 1, Probability: 0.7500, Model: keras_mlp
+2025-03-22 19:50:55,378 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,379 - api.app - INFO - Received batch prediction request for 1 patients using model: None
+2025-03-22 19:50:55,379 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:50:55,379 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:50:55,394 - httpx - INFO - HTTP Request: POST http://testserver/predict/batch "HTTP/1.1 200 OK"
+2025-03-22 19:50:55,395 - src.data.preprocess - INFO - Binarizing target column: target
+2025-03-22 19:50:55,395 - src.data.preprocess - INFO - Converting target from multiclass to binary
+2025-03-22 19:50:55,396 - src.data.preprocess - INFO - Target distribution after binarization: {1: 4, 0: 1}
+2025-03-22 19:50:55,396 - src.data.preprocess - INFO - Handling missing values
+2025-03-22 19:50:55,396 - src.data.preprocess - INFO - Missing values found:
+2025-03-22 19:50:55,397 - src.data.preprocess - INFO -   age: 1 (20.00%)
+2025-03-22 19:50:55,397 - src.data.preprocess - INFO -   sex: 1 (20.00%)
+2025-03-22 19:50:55,397 - src.data.preprocess - INFO -   chol: 1 (20.00%)
+2025-03-22 19:50:55,397 - src.data.preprocess - INFO - Imputing numerical values with median
+2025-03-22 19:50:55,397 - src.data.preprocess - INFO - Imputing categorical values with most_frequent
+2025-03-22 19:50:55,398 - src.data.preprocess - INFO - Creating preprocessing pipeline
+2025-03-22 19:50:55,398 - src.data.preprocess - INFO - Using median imputer for numerical features
+2025-03-22 19:50:55,398 - src.data.preprocess - INFO - Using RobustScaler for numerical features
+2025-03-22 19:50:55,398 - src.data.preprocess - INFO - Preprocessing pipeline created successfully
+2025-03-22 19:50:55,398 - src.features.feature_engineering - INFO - Creating feature interactions
+2025-03-22 19:50:55,399 - src.features.feature_engineering - INFO - Created new feature interactions: []
+2025-03-22 19:50:55,399 - src.features.feature_engineering - INFO - Creating medical risk score
+2025-03-22 19:50:55,401 - src.features.feature_engineering - INFO - Medical risk score created successfully
+2025-03-22 19:51:01,365 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:51:01,366 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:51:01,375 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:51:01,376 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:51:01,376 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:51:01,377 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:51:01,377 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:51:01,383 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:51:01,384 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:51:01,384 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:51:01,385 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:51:01,386 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:51:01,392 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:51:01,392 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:51:01,393 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:51:01,393 - src.models.mlp_model - INFO - Building scikit-learn MLP with (100, 50) hidden layers
+2025-03-22 19:51:01,394 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:51:01,394 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:51:01,400 - src.models.mlp_model - INFO - Train: Acc=0.5571, AUC=0.6567
+2025-03-22 19:51:01,400 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:51:01,406 - src.models.mlp_model - INFO - Train: Acc=0.5571, AUC=0.6567
+2025-03-22 19:51:01,408 - src.models.mlp_model - INFO - Val: Acc=0.6000, AUC=0.3889
+2025-03-22 19:51:01,409 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:51:01,409 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:51:01,414 - src.models.mlp_model - INFO - Train: Acc=0.4714, AUC=0.4455
+2025-03-22 19:51:01,414 - src.models.mlp_model - INFO - Evaluating scikit-learn MLP model on test data
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO - Test metrics for scikit-learn MLP:
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO -   Accuracy:  0.4000
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO -   Precision: 0.0000
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO -   Recall:    0.0000
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO -   F1 Score:  0.0000
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO -   ROC AUC:   0.6481
+2025-03-22 19:51:01,416 - src.models.mlp_model - INFO - Building Keras MLP with 2 hidden layers
+2025-03-22 19:51:01,426 - src.models.mlp_model - INFO - Model: "functional_8"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input (InputLayer)              │ (None, 10)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_0 (Dense)                 │ (None, 64)             │           704 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_0 (Dropout)             │ (None, 64)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 32)             │         2,080 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 32)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ output (Dense)                  │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 2,817 (11.00 KB)
+ Trainable params: 2,817 (11.00 KB)
+ Non-trainable params: 0 (0.00 B)
+
+2025-03-22 19:52:59,712 - api.app - INFO - All modules imported successfully
+2025-03-22 19:52:59,714 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:52:59,714 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:52:59,728 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:52:59,729 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:52:59,729 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:52:59,844 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,845 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,846 - api.app - INFO - Received model info request
+2025-03-22 19:52:59,847 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,849 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:52:59,849 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:52:59,849 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:52:59,877 - api.app - INFO - Prediction: 1, Probability: 0.9979, Model: ensemble
+2025-03-22 19:52:59,878 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,879 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,879 - api.app - INFO - Received model info request
+2025-03-22 19:52:59,880 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,880 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:52:59,880 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:52:59,881 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:52:59,896 - api.app - INFO - Prediction: 1, Probability: 0.9897, Model: ensemble
+2025-03-22 19:52:59,897 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,898 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:52:59,898 - api.app - INFO - Prediction: 1, Probability: 0.7500, Model: keras_mlp
+2025-03-22 19:52:59,898 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,899 - api.app - INFO - Received batch prediction request for 1 patients using model: None
+2025-03-22 19:52:59,899 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:52:59,899 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:52:59,914 - httpx - INFO - HTTP Request: POST http://testserver/predict/batch "HTTP/1.1 200 OK"
+2025-03-22 19:52:59,915 - src.data.preprocess - INFO - Binarizing target column: target
+2025-03-22 19:52:59,915 - src.data.preprocess - INFO - Converting target from multiclass to binary
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO - Target distribution after binarization: {1: 4, 0: 1}
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO - Handling missing values
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO - Missing values found:
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO -   age: 1 (20.00%)
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO -   sex: 1 (20.00%)
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO -   chol: 1 (20.00%)
+2025-03-22 19:52:59,916 - src.data.preprocess - INFO - Imputing numerical values with median
+2025-03-22 19:52:59,917 - src.data.preprocess - INFO - Imputing categorical values with most_frequent
+2025-03-22 19:52:59,917 - src.data.preprocess - INFO - Creating preprocessing pipeline
+2025-03-22 19:52:59,917 - src.data.preprocess - INFO - Using median imputer for numerical features
+2025-03-22 19:52:59,917 - src.data.preprocess - INFO - Using RobustScaler for numerical features
+2025-03-22 19:52:59,918 - src.data.preprocess - INFO - Preprocessing pipeline created successfully
+2025-03-22 19:52:59,918 - src.features.feature_engineering - INFO - Creating feature interactions
+2025-03-22 19:52:59,919 - src.features.feature_engineering - INFO - Created new feature interactions: []
+2025-03-22 19:52:59,919 - src.features.feature_engineering - INFO - Creating medical risk score
+2025-03-22 19:52:59,921 - src.features.feature_engineering - INFO - Medical risk score created successfully
+2025-03-22 19:53:05,877 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:53:05,878 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:53:05,885 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:53:05,886 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:53:05,886 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:53:05,887 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:53:05,888 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:53:05,893 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:53:05,894 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:53:05,894 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:53:05,895 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:53:05,895 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:53:05,902 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:53:05,903 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:53:05,903 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:53:05,904 - src.models.mlp_model - INFO - Building scikit-learn MLP with (100, 50) hidden layers
+2025-03-22 19:53:05,904 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:53:05,904 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:53:05,911 - src.models.mlp_model - INFO - Train: Acc=0.4429, AUC=0.6278
+2025-03-22 19:53:05,911 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:53:05,916 - src.models.mlp_model - INFO - Train: Acc=0.4429, AUC=0.6278
+2025-03-22 19:53:05,918 - src.models.mlp_model - INFO - Val: Acc=0.3333, AUC=0.5400
+2025-03-22 19:53:05,919 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:53:05,919 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:53:05,924 - src.models.mlp_model - INFO - Train: Acc=0.5857, AUC=0.5383
+2025-03-22 19:53:05,924 - src.models.mlp_model - INFO - Evaluating scikit-learn MLP model on test data
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO - Test metrics for scikit-learn MLP:
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO -   Accuracy:  0.6000
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO -   Precision: 0.0000
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO -   Recall:    0.0000
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO -   F1 Score:  0.0000
+2025-03-22 19:53:05,926 - src.models.mlp_model - INFO -   ROC AUC:   0.5370
+2025-03-22 19:53:05,927 - src.models.mlp_model - INFO - Building Keras MLP with 2 hidden layers
+2025-03-22 19:53:05,936 - src.models.mlp_model - INFO - Model: "functional_8"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input (InputLayer)              │ (None, 10)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_0 (Dense)                 │ (None, 64)             │           704 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_0 (Dropout)             │ (None, 64)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 32)             │         2,080 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 32)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ output (Dense)                  │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 2,817 (11.00 KB)
+ Trainable params: 2,817 (11.00 KB)
+ Non-trainable params: 0 (0.00 B)
+
+2025-03-22 19:55:01,962 - api.app - INFO - All modules imported successfully
+2025-03-22 19:55:01,964 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:55:01,964 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:55:01,978 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:55:01,979 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:55:01,979 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:55:02,110 - httpx - INFO - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,111 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,112 - api.app - INFO - Received model info request
+2025-03-22 19:55:02,112 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,114 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:55:02,114 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:55:02,114 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:55:02,143 - api.app - INFO - Prediction: 1, Probability: 0.9979, Model: ensemble
+2025-03-22 19:55:02,143 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,145 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,145 - api.app - INFO - Received model info request
+2025-03-22 19:55:02,145 - httpx - INFO - HTTP Request: GET http://testserver/models/info "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,146 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:55:02,146 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:55:02,146 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:55:02,161 - api.app - INFO - Prediction: 1, Probability: 0.9897, Model: ensemble
+2025-03-22 19:55:02,162 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,163 - api.app - INFO - Received prediction request using model: None
+2025-03-22 19:55:02,163 - api.app - INFO - Prediction: 1, Probability: 0.7500, Model: keras_mlp
+2025-03-22 19:55:02,163 - httpx - INFO - HTTP Request: POST http://testserver/predict "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,164 - api.app - INFO - Received batch prediction request for 1 patients using model: None
+2025-03-22 19:55:02,164 - src.models.predict_model - INFO - Making predictions
+2025-03-22 19:55:02,164 - src.models.predict_model - INFO - Preprocessing input data
+2025-03-22 19:55:02,179 - httpx - INFO - HTTP Request: POST http://testserver/predict/batch "HTTP/1.1 200 OK"
+2025-03-22 19:55:02,180 - src.data.preprocess - INFO - Binarizing target column: target
+2025-03-22 19:55:02,180 - src.data.preprocess - INFO - Converting target from multiclass to binary
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO - Target distribution after binarization: {1: 4, 0: 1}
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO - Handling missing values
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO - Missing values found:
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO -   age: 1 (20.00%)
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO -   sex: 1 (20.00%)
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO -   chol: 1 (20.00%)
+2025-03-22 19:55:02,181 - src.data.preprocess - INFO - Imputing numerical values with median
+2025-03-22 19:55:02,182 - src.data.preprocess - INFO - Imputing categorical values with most_frequent
+2025-03-22 19:55:02,182 - src.data.preprocess - INFO - Creating preprocessing pipeline
+2025-03-22 19:55:02,182 - src.data.preprocess - INFO - Using median imputer for numerical features
+2025-03-22 19:55:02,182 - src.data.preprocess - INFO - Using RobustScaler for numerical features
+2025-03-22 19:55:02,182 - src.data.preprocess - INFO - Preprocessing pipeline created successfully
+2025-03-22 19:55:02,183 - src.features.feature_engineering - INFO - Creating feature interactions
+2025-03-22 19:55:02,184 - src.features.feature_engineering - INFO - Created new feature interactions: []
+2025-03-22 19:55:02,184 - src.features.feature_engineering - INFO - Creating medical risk score
+2025-03-22 19:55:02,186 - src.features.feature_engineering - INFO - Medical risk score created successfully
+2025-03-22 19:55:08,150 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:55:08,151 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:55:08,158 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:55:08,159 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:55:08,159 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:55:08,160 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:55:08,160 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:55:08,165 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:55:08,166 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:55:08,166 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:55:08,167 - src.models.predict_model - INFO - Loading models from models
+2025-03-22 19:55:08,167 - src.models.predict_model - INFO - Loaded scikit-learn model
+2025-03-22 19:55:08,174 - absl - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-03-22 19:55:08,174 - src.models.predict_model - INFO - Loaded Keras model
+2025-03-22 19:55:08,174 - src.models.predict_model - INFO - Loaded preprocessor
+2025-03-22 19:55:08,175 - src.models.mlp_model - INFO - Building scikit-learn MLP with (100, 50) hidden layers
+2025-03-22 19:55:08,175 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:55:08,175 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:55:08,181 - src.models.mlp_model - INFO - Train: Acc=0.5143, AUC=0.3080
+2025-03-22 19:55:08,181 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:55:08,186 - src.models.mlp_model - INFO - Train: Acc=0.5143, AUC=0.3080
+2025-03-22 19:55:08,188 - src.models.mlp_model - INFO - Val: Acc=0.4000, AUC=0.5185
+2025-03-22 19:55:08,189 - src.models.mlp_model - INFO - Building scikit-learn MLP with (5,) hidden layers
+2025-03-22 19:55:08,189 - src.models.mlp_model - INFO - Training scikit-learn MLP classifier
+2025-03-22 19:55:08,194 - src.models.mlp_model - INFO - Train: Acc=0.3857, AUC=0.4737
+2025-03-22 19:55:08,194 - src.models.mlp_model - INFO - Evaluating scikit-learn MLP model on test data
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO - Test metrics for scikit-learn MLP:
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO -   Accuracy:  0.6667
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO -   Precision: 0.0000
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO -   Recall:    0.0000
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO -   F1 Score:  0.0000
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO -   ROC AUC:   0.6200
+2025-03-22 19:55:08,197 - src.models.mlp_model - INFO - Building Keras MLP with 2 hidden layers
+2025-03-22 19:55:08,207 - src.models.mlp_model - INFO - Model: "functional_8"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input (InputLayer)              │ (None, 10)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_0 (Dense)                 │ (None, 64)             │           704 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_0 (Dropout)             │ (None, 64)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense_1 (Dense)                 │ (None, 32)             │         2,080 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dropout_1 (Dropout)             │ (None, 32)             │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ output (Dense)                  │ (None, 1)              │            33 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 2,817 (11.00 KB)
+ Trainable params: 2,817 (11.00 KB)
+ Non-trainable params: 0 (0.00 B)
