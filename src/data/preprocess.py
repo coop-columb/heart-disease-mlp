@@ -68,7 +68,7 @@ def binarize_target(df: pd.DataFrame, target_col: str = "target") -> pd.DataFram
 
 # This function is intentionally complex due to the specific rules for each feature
 # noqa: C901
-def handle_missing_values(
+def handle_missing_values(  # noqa: C901
     df: pd.DataFrame,
     numeric_strategy: str = "median",
     categorical_strategy: str = "most_frequent",
@@ -103,9 +103,11 @@ def handle_missing_values(
         for col in numeric_cols:
             if df[col].isnull().sum() > 0:
                 if numeric_strategy == "median":
-                    df[col].fillna(df[col].median(), inplace=True)
+                    # Fix for pandas FutureWarning about chained assignment with inplace=True
+                    df[col] = df[col].fillna(df[col].median())
                 elif numeric_strategy == "mean":
-                    df[col].fillna(df[col].mean(), inplace=True)
+                    # Fix for pandas FutureWarning about chained assignment with inplace=True
+                    df[col] = df[col].fillna(df[col].mean())
                 elif numeric_strategy == "knn":
                     # This is a placeholder, actual KNN imputation will be handled by the pipeline
                     logger.info("KNN imputation will be handled by the preprocessing pipeline")
@@ -116,7 +118,8 @@ def handle_missing_values(
         for col in categorical_cols:
             if df[col].isnull().sum() > 0:
                 if categorical_strategy == "most_frequent":
-                    df[col].fillna(df[col].mode()[0], inplace=True)
+                    # Fix for pandas FutureWarning about chained assignment with inplace=True
+                    df[col] = df[col].fillna(df[col].mode()[0])
                 else:
                     raise ValueError(
                         f"Unknown categorical imputation strategy: {categorical_strategy}"
