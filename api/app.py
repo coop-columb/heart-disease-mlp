@@ -1,33 +1,56 @@
 """
 FastAPI application for heart disease prediction API.
+This module provides REST API endpoints for predicting heart disease risk.
 """
 
 # flake8: noqa: F401, E501
 import logging
 import os
 import sys
-from typing import List, Optional
+import traceback
+from typing import Dict, List, Optional, Union
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+# Clean Python path to avoid conflicts with other projects
+original_path = list(sys.path)
 
-# Reset path and add project root to path to avoid conflicts with other projects
+# Filter out any paths related to conflicting projects
+filtered_path = [p for p in original_path if "EmotionAdaptiveMusic" not in p]
+sys.path = filtered_path
+
+# Add the project root first to ensure it takes precedence
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-# Filter out any paths related to EmotionAdaptiveMusic
-sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
+if project_root in sys.path:
+    sys.path.remove(project_root)
 sys.path.insert(0, project_root)
 
-from src.models.predict_model import HeartDiseasePredictor
-from src.utils import load_config
-
-# Configure logging
+# Configure logging before imports to ensure proper logging setup
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(project_root, "api.log"))],
 )
 logger = logging.getLogger(__name__)
+
+# Log the Python path for debugging
+logger.debug("Python path after cleaning:")
+for p in sys.path:
+    logger.debug(f"  {p}")
+
+try:
+    # Import FastAPI after path setup
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel, Field
+
+    # Import project modules
+    from src.models.predict_model import HeartDiseasePredictor
+    from src.utils import load_config
+
+    logger.info("All modules imported successfully")
+except ImportError as e:
+    logger.critical(f"Error importing modules: {e}")
+    traceback.print_exc()
+    raise
 
 # Load configuration
 config = load_config()
@@ -103,18 +126,23 @@ class PatientData(BaseModel):
 class PredictionResponse(BaseModel):
     """Response model for heart disease prediction."""
 
-    prediction: int = Field(..., description="Heart disease prediction (0=no, 1=yes)")
-    probability: float = Field(..., description="Probability of heart disease")
-    risk_level: str = Field(..., description="Risk level assessment")
-    interpretation: Optional[str] = Field(None, description="Clinical interpretation of prediction")
-    model_used: Optional[str] = Field(None, description="Model used for prediction")
+    prediction: int = Field(..., description="Heart disease prediction (0=no, 1=yes, 0 if error)")
+    probability: float = Field(..., description="Probability of heart disease (0.0 if error)")
+    risk_level: str = Field(
+        ..., description="Risk level assessment (LOW, MODERATE, HIGH, or ERROR)"
+    )
+    interpretation: Optional[str] = Field(
+        None, description="Clinical interpretation of prediction or error message"
+    )
+    model_used: Optional[str] = Field(None, description="Model used for prediction (None if error)")
 
 
 class BatchPredictionResponse(BaseModel):
     """Response model for batch heart disease prediction."""
 
     predictions: List[PredictionResponse] = Field(
-        ..., description="List of predictions for each patient"
+        ...,
+        description="List of predictions for each patient, including any that resulted in errors",
     )
 
 
@@ -159,40 +187,55 @@ async def predict(patient_data: PatientData, model: str = None):
             patient_dict, return_probabilities=True, return_interpretation=True
         )
 
+        # Check for error in prediction result
+        if "error" in prediction_result:
+            logger.error(f"Prediction error: {prediction_result['error']}")
+            raise HTTPException(status_code=500, detail=prediction_result["error"])
+
         # Select model based on parameter if provided
         model_used = None
+        prediction = None
+        probability = None
+
+        # Try the specifically requested model first
         if model == "sklearn" and "sklearn_predictions" in prediction_result:
             prediction = prediction_result["sklearn_predictions"][0]
-            probability = prediction_result["sklearn_probabilities"][0]
+            probability = prediction_result.get("sklearn_probabilities", [None])[0]
             model_used = "sklearn_mlp"
         elif model == "keras" and "keras_predictions" in prediction_result:
             prediction = prediction_result["keras_predictions"][0]
-            probability = prediction_result["keras_probabilities"][0]
+            probability = prediction_result.get("keras_probabilities", [None])[0]
             model_used = "keras_mlp"
         elif model == "ensemble" and "ensemble_predictions" in prediction_result:
             prediction = prediction_result["ensemble_predictions"][0]
-            probability = prediction_result["ensemble_probabilities"][0]
+            probability = prediction_result.get("ensemble_probabilities", [None])[0]
             model_used = "ensemble"
         # If no specific model requested or requested model not available, use best available
         elif "ensemble_predictions" in prediction_result:
             prediction = prediction_result["ensemble_predictions"][0]
-            probability = prediction_result["ensemble_probabilities"][0]
+            probability = prediction_result.get("ensemble_probabilities", [None])[0]
             model_used = "ensemble"
         elif "sklearn_predictions" in prediction_result:
             prediction = prediction_result["sklearn_predictions"][0]
-            probability = prediction_result["sklearn_probabilities"][0]
+            probability = prediction_result.get("sklearn_probabilities", [None])[0]
             model_used = "sklearn_mlp"
         elif "keras_predictions" in prediction_result:
             prediction = prediction_result["keras_predictions"][0]
-            probability = prediction_result["keras_probabilities"][0]
+            probability = prediction_result.get("keras_probabilities", [None])[0]
             model_used = "keras_mlp"
-        else:
-            raise HTTPException(status_code=500, detail="No predictions available")
+
+        # Handle case where no predictions are available
+        if prediction is None or model_used is None:
+            logger.error("No valid predictions found in model output")
+            raise HTTPException(status_code=500, detail="No predictions available from any model")
+
+        # Handle missing probability
+        if probability is None:
+            logger.warning("Probability value missing, using default of 0.5")
+            probability = 0.5
 
         # Determine risk level
-        if probability is None:
-            risk_level = "UNKNOWN"
-        elif probability < 0.3:
+        if probability < 0.3:
             risk_level = "LOW"
         elif probability < 0.6:
             risk_level = "MODERATE"
@@ -217,7 +260,15 @@ async def predict(patient_data: PatientData, model: str = None):
 
         return response
 
+    except HTTPException:
+        # Re-raise HTTP exceptions without modification
+        raise
+    except ValueError as e:
+        # Handle validation errors
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Invalid input data: {str(e)}")
     except Exception as e:
+        # Handle all other errors
         logger.error(f"Error making prediction: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
@@ -242,78 +293,138 @@ async def predict_batch(patients_data: List[PatientData], model: str = None):
         results = []
 
         # Process each patient
-        for patient_data in patients_data:
-            # Convert patient data to dictionary
-            # Support both Pydantic v1 (dict) and v2 (model_dump)
-            patient_dict = (
-                patient_data.model_dump()
-                if hasattr(patient_data, "model_dump")
-                else patient_data.dict()
-            )
+        for i, patient_data in enumerate(patients_data):
+            try:
+                # Convert patient data to dictionary
+                # Support both Pydantic v1 (dict) and v2 (model_dump)
+                patient_dict = (
+                    patient_data.model_dump()
+                    if hasattr(patient_data, "model_dump")
+                    else patient_data.dict()
+                )
 
-            # Make prediction
-            prediction_result = model_predictor.predict(
-                patient_dict, return_probabilities=True, return_interpretation=True
-            )
+                # Make prediction
+                prediction_result = model_predictor.predict(
+                    patient_dict, return_probabilities=True, return_interpretation=True
+                )
 
-            # Select model based on parameter if provided (similar logic to single prediction)
-            model_used = None
-            if model == "sklearn" and "sklearn_predictions" in prediction_result:
-                prediction = prediction_result["sklearn_predictions"][0]
-                probability = prediction_result["sklearn_probabilities"][0]
-                model_used = "sklearn_mlp"
-            elif model == "keras" and "keras_predictions" in prediction_result:
-                prediction = prediction_result["keras_predictions"][0]
-                probability = prediction_result["keras_probabilities"][0]
-                model_used = "keras_mlp"
-            elif model == "ensemble" and "ensemble_predictions" in prediction_result:
-                prediction = prediction_result["ensemble_predictions"][0]
-                probability = prediction_result["ensemble_probabilities"][0]
-                model_used = "ensemble"
-            # If no specific model requested or requested model not available, use best available
-            elif "ensemble_predictions" in prediction_result:
-                prediction = prediction_result["ensemble_predictions"][0]
-                probability = prediction_result["ensemble_probabilities"][0]
-                model_used = "ensemble"
-            elif "sklearn_predictions" in prediction_result:
-                prediction = prediction_result["sklearn_predictions"][0]
-                probability = prediction_result["sklearn_probabilities"][0]
-                model_used = "sklearn_mlp"
-            elif "keras_predictions" in prediction_result:
-                prediction = prediction_result["keras_predictions"][0]
-                probability = prediction_result["keras_probabilities"][0]
-                model_used = "keras_mlp"
-            else:
-                continue  # Skip this patient if no predictions available
+                # Check for error in prediction result
+                if "error" in prediction_result:
+                    logger.warning(
+                        f"Prediction error for patient {i}: {prediction_result['error']}"
+                    )
+                    results.append(
+                        {
+                            "prediction": 0,
+                            "probability": 0.0,
+                            "risk_level": "ERROR",
+                            "interpretation": f"Error: {prediction_result['error']}",
+                            "model_used": None,
+                        }
+                    )
+                    continue
 
-            # Determine risk level
-            if probability is None:
-                risk_level = "UNKNOWN"
-            elif probability < 0.3:
-                risk_level = "LOW"
-            elif probability < 0.6:
-                risk_level = "MODERATE"
-            else:
-                risk_level = "HIGH"
+                # Select model based on parameter if provided
+                model_used = None
+                prediction = None
+                probability = None
 
-            # Get interpretation if available
-            interpretation = prediction_result.get("interpretation", None)
+                # Try the specifically requested model first
+                if model == "sklearn" and "sklearn_predictions" in prediction_result:
+                    prediction = prediction_result["sklearn_predictions"][0]
+                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                    model_used = "sklearn_mlp"
+                elif model == "keras" and "keras_predictions" in prediction_result:
+                    prediction = prediction_result["keras_predictions"][0]
+                    probability = prediction_result.get("keras_probabilities", [None])[0]
+                    model_used = "keras_mlp"
+                elif model == "ensemble" and "ensemble_predictions" in prediction_result:
+                    prediction = prediction_result["ensemble_predictions"][0]
+                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                    model_used = "ensemble"
+                # If no specific model requested or requested model not available, use best available
+                elif "ensemble_predictions" in prediction_result:
+                    prediction = prediction_result["ensemble_predictions"][0]
+                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                    model_used = "ensemble"
+                elif "sklearn_predictions" in prediction_result:
+                    prediction = prediction_result["sklearn_predictions"][0]
+                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                    model_used = "sklearn_mlp"
+                elif "keras_predictions" in prediction_result:
+                    prediction = prediction_result["keras_predictions"][0]
+                    probability = prediction_result.get("keras_probabilities", [None])[0]
+                    model_used = "keras_mlp"
 
-            # Add result for this patient
-            results.append(
-                {
-                    "prediction": int(prediction),
-                    "probability": float(probability),
-                    "risk_level": risk_level,
-                    "interpretation": interpretation,
-                    "model_used": model_used,
-                }
-            )
+                # Handle case where no predictions are available
+                if prediction is None or model_used is None:
+                    logger.warning(f"No valid predictions found for patient {i}")
+                    results.append(
+                        {
+                            "prediction": 0,
+                            "probability": 0.0,
+                            "risk_level": "ERROR",
+                            "interpretation": "No predictions available from any model",
+                            "model_used": None,
+                        }
+                    )
+                    continue
+
+                # Handle missing probability
+                if probability is None:
+                    logger.warning(
+                        f"Probability value missing for patient {i}, using default of 0.5"
+                    )
+                    probability = 0.5
+
+                # Determine risk level
+                if probability < 0.3:
+                    risk_level = "LOW"
+                elif probability < 0.6:
+                    risk_level = "MODERATE"
+                else:
+                    risk_level = "HIGH"
+
+                # Get interpretation if available
+                interpretation = prediction_result.get("interpretation", None)
+
+                # Add result for this patient
+                results.append(
+                    {
+                        "prediction": int(prediction),
+                        "probability": float(probability),
+                        "risk_level": risk_level,
+                        "interpretation": interpretation,
+                        "model_used": model_used,
+                    }
+                )
+
+            except Exception as e:
+                # Log and continue with next patient if one fails
+                logger.error(f"Error processing patient {i}: {str(e)}")
+                results.append(
+                    {
+                        "prediction": 0,
+                        "probability": 0.0,
+                        "risk_level": "ERROR",
+                        "interpretation": f"Error processing patient: {str(e)}",
+                        "model_used": None,
+                    }
+                )
+
+        # If no valid results were obtained, raise an exception
+        if not results:
+            raise ValueError("No valid predictions could be made for any patients in the batch")
 
         # Return batch results
         return {"predictions": results}
 
+    except ValueError as e:
+        # Handle validation errors
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Invalid input data: {str(e)}")
     except Exception as e:
+        # Handle all other errors
         logger.error(f"Error making batch predictions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Batch prediction error: {str(e)}")
 

@@ -4,18 +4,18 @@ MLP model implementations for the Heart Disease Prediction project.
 
 import logging
 import os
-from typing import Any, Dict, List, Tuple  # Optional, Union used in development
+import sys  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
 
-# import joblib  # Used for model persistence
+# Standard libraries for data processing and visualization
 import matplotlib.pyplot as plt
 import numpy as np
 
-# import pandas as pd  # Used for dataframe processing
-# import tensorflow as tf  # Core TF functionality
+# Machine learning libraries
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from tensorflow import keras
-from tensorflow.keras import layers, regularizers  # callbacks used for model training
+from tensorflow.keras import callbacks, layers, regularizers  # noqa: F401
 
 # Configure logging
 logging.basicConfig(
@@ -445,7 +445,7 @@ def combine_predictions(
 
 # This function is intentionally complex due to the comprehensive interpretation logic
 # noqa: C901
-def interpret_prediction(
+def interpret_prediction(  # noqa: C901
     model=None,
     patient_data: Dict[str, float] = None,
     feature_names: List[str] = None,
@@ -463,55 +463,84 @@ def interpret_prediction(
     Returns:
         String interpretation of the prediction
     """
+    # Set up logger
+    logger = logging.getLogger(__name__)
+
+    # Handle edge cases
+    if patient_data is None:
+        logger.warning("No patient data provided for interpretation")
+        return "No patient data provided for interpretation."
+
     # If model is provided, use it to get prediction
     if model is not None and feature_names is not None:
-        # Convert patient data to feature array
-        X = np.array([[patient_data[f] for f in feature_names]])
+        try:
+            # Convert patient data to feature array
+            X = np.array([[patient_data[f] for f in feature_names]])
 
-        # Make prediction
-        if isinstance(model, keras.Model):
-            probability = model.predict(X)[0][0]
-        else:
-            probability = model.predict_proba(X)[0][1]
+            # Make prediction
+            if isinstance(model, keras.Model):
+                probability = model.predict(X)[0][0]
+            else:
+                probability = model.predict_proba(X)[0][1]
+        except Exception as e:
+            logger.error(f"Error predicting with model: {e}")
+            # Use default probability if prediction fails
+            if probability is None:
+                probability = 0.5
+
+    # Handle missing probability
+    if probability is None:
+        logger.warning("Missing probability value, using default of 0.5")
+        probability = 0.5  # Use a default value instead of returning early
 
     # Start building the interpretation
     interpretation = []
 
+    # Ensure probability is a float (important for comparison)
+    try:
+        probability_float = float(probability)
+    except (TypeError, ValueError):
+        logger.warning(f"Invalid probability value: {probability}, using default of 0.5")
+        probability_float = 0.5  # Fallback to default
+
     # High vs low risk determination
-    if probability > 0.5:
+    if probability_float > 0.5:
         interpretation.append(
-            f"HIGH RISK PREDICTION: {probability:.1%} probability of heart disease"
+            f"HIGH RISK PREDICTION: {probability_float:.1%} probability of heart disease"
         )
 
         # Identify risk factors
         risk_factors = []
 
-        # Check common risk factors
-        if "age" in patient_data and patient_data["age"] > 55:
+        # Check common risk factors - with safe access to dict keys
+        if patient_data.get("age", 0) > 55:
             risk_factors.append("Advanced age (over 55)")
 
-        if "sex" in patient_data and patient_data["sex"] == 1:
+        if patient_data.get("sex", 0) == 1:
             risk_factors.append("Male over 45")
 
-        if "trestbps" in patient_data and patient_data["trestbps"] > 140:
+        if patient_data.get("trestbps", 0) > 140:
             risk_factors.append("Elevated resting blood pressure")
 
-        if "chol" in patient_data and patient_data["chol"] > 240:
+        if patient_data.get("chol", 0) > 240:
             risk_factors.append("High cholesterol")
 
-        if "fbs" in patient_data and patient_data["fbs"] == 1:
+        if patient_data.get("fbs", 0) == 1:
             risk_factors.append("Fasting blood sugar > 120 mg/dl")
 
-        if "thalach" in patient_data and patient_data["thalach"] < 150:
+        if patient_data.get("thalach", 999) < 150:  # Use high default to avoid false positive
             risk_factors.append("Reduced maximum heart rate")
 
-        if "exang" in patient_data and patient_data["exang"] == 1:
+        if patient_data.get("exang", 0) == 1:
             risk_factors.append("Exercise-induced angina")
 
         # Add risk factors to interpretation
-        interpretation.append("\nKey risk factors identified:")
-        for factor in risk_factors:
-            interpretation.append(f"- {factor}")
+        if risk_factors:
+            interpretation.append("\nKey risk factors identified:")
+            for factor in risk_factors:
+                interpretation.append(f"- {factor}")
+        else:
+            interpretation.append("\nNo specific risk factors identified in the provided data.")
 
         # Add recommendations
         interpretation.append("\nRecommendations:")
@@ -521,21 +550,19 @@ def interpret_prediction(
 
     else:
         interpretation.append(
-            f"LOW RISK PREDICTION: {probability:.1%} probability of heart disease"
+            f"LOW RISK PREDICTION: {probability_float:.1%} probability of heart disease"
         )
 
-        # For low risk, do a quick check if there are any risk factors
-        has_risk_factors = False
-        if (
-            ("age" in patient_data and patient_data["age"] > 45)
-            or ("sex" in patient_data and patient_data["sex"] == 1)
-            or ("trestbps" in patient_data and patient_data["trestbps"] > 130)
-            or ("chol" in patient_data and patient_data["chol"] > 200)
-            or ("fbs" in patient_data and patient_data["fbs"] == 1)
-            or ("thalach" in patient_data and patient_data["thalach"] < 150)
-            or ("exang" in patient_data and patient_data["exang"] == 1)
-        ):
-            has_risk_factors = True
+        # For low risk, do a quick check if there are any risk factors - with safe access
+        has_risk_factors = (
+            patient_data.get("age", 0) > 45
+            or patient_data.get("sex", 0) == 1
+            or patient_data.get("trestbps", 0) > 130
+            or patient_data.get("chol", 0) > 200
+            or patient_data.get("fbs", 0) == 1
+            or patient_data.get("thalach", 999) < 150
+            or patient_data.get("exang", 0) == 1  # Use high default to avoid false positive
+        )
 
         if has_risk_factors:
             interpretation.append("\nSome risk factors present, but overall risk is low.")

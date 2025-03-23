@@ -119,60 +119,105 @@ class HeartDiseasePredictor:
         """
         logger.info("Making predictions")
 
-        # Store original data for interpretation
-        if isinstance(patient_data, dict):
-            original_data = patient_data
-        else:
-            original_data = patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
-
-        # Preprocess input
-        X = self.preprocess_input(patient_data)
-
-        # Initialize results
-        results = {}
-
-        # Make predictions with scikit-learn model
-        if self.sklearn_model is not None:
-            sklearn_probas = self.sklearn_model.predict_proba(X)[:, 1]
-            sklearn_preds = (sklearn_probas >= 0.5).astype(int)
-
-            results["sklearn_predictions"] = sklearn_preds
-            if return_probabilities:
-                results["sklearn_probabilities"] = sklearn_probas
-
-        # Make predictions with Keras model
-        if self.keras_model is not None:
-            keras_probas = self.keras_model.predict(X).ravel()
-            keras_preds = (keras_probas >= 0.5).astype(int)
-
-            results["keras_predictions"] = keras_preds
-            if return_probabilities:
-                results["keras_probabilities"] = keras_probas
-
-        # Combine predictions if both models are available
-        if self.sklearn_model is not None and self.keras_model is not None:
-            combined_probas = combine_predictions(sklearn_probas, keras_probas, method="mean")
-            combined_preds = (combined_probas >= 0.5).astype(int)
-
-            self.has_ensemble_model = True
-            results["ensemble_predictions"] = combined_preds
-            if return_probabilities:
-                results["ensemble_probabilities"] = combined_probas
-
-            # Use ensemble probabilities for interpretation
-            if return_interpretation and original_data is not None:
-                interpretation = interpret_prediction(original_data, combined_probas[0])
-                results["interpretation"] = interpretation
-
-        # Use available model if only one is loaded
-        elif return_interpretation and original_data is not None:
-            if self.sklearn_model is not None:
-                interpretation = interpret_prediction(original_data, sklearn_probas[0])
-            elif self.keras_model is not None:
-                interpretation = interpret_prediction(original_data, keras_probas[0])
+        try:
+            # Store original data for interpretation
+            if isinstance(patient_data, dict):
+                original_data = patient_data
             else:
-                interpretation = "No models available for interpretation."
+                original_data = patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
 
-            results["interpretation"] = interpretation
+            # Preprocess input
+            X = self.preprocess_input(patient_data)
 
-        return results
+            # Initialize results
+            results = {}
+
+            # Track which model predictions are available
+            sklearn_available = False
+            keras_available = False
+            sklearn_probas = None
+            keras_probas = None
+
+            # Make predictions with scikit-learn model
+            if self.sklearn_model is not None:
+                try:
+                    sklearn_probas = self.sklearn_model.predict_proba(X)[:, 1]
+                    sklearn_preds = (sklearn_probas >= 0.5).astype(int)
+                    results["sklearn_predictions"] = sklearn_preds
+                    if return_probabilities:
+                        results["sklearn_probabilities"] = sklearn_probas
+                    sklearn_available = True
+                except Exception as e:
+                    logger.warning(f"Error making scikit-learn predictions: {e}")
+
+            # Make predictions with Keras model
+            if self.keras_model is not None:
+                try:
+                    keras_probas = self.keras_model.predict(X).ravel()
+                    keras_preds = (keras_probas >= 0.5).astype(int)
+                    results["keras_predictions"] = keras_preds
+                    if return_probabilities:
+                        results["keras_probabilities"] = keras_probas
+                    keras_available = True
+                except Exception as e:
+                    logger.warning(f"Error making Keras predictions: {e}")
+
+            # Combine predictions if both models are available
+            if sklearn_available and keras_available:
+                try:
+                    combined_probas = combine_predictions(
+                        sklearn_probas, keras_probas, method="mean"
+                    )
+                    combined_preds = (combined_probas >= 0.5).astype(int)
+
+                    self.has_ensemble_model = True
+                    results["ensemble_predictions"] = combined_preds
+                    if return_probabilities:
+                        results["ensemble_probabilities"] = combined_probas
+
+                    # Use ensemble probabilities for interpretation
+                    if return_interpretation and original_data is not None:
+                        interpretation = interpret_prediction(
+                            patient_data=original_data, probability=combined_probas[0]
+                        )
+                        results["interpretation"] = interpretation
+                except Exception as e:
+                    logger.warning(f"Error combining predictions: {e}")
+                    self.has_ensemble_model = False
+
+            # Use available model if only one is loaded
+            elif return_interpretation and original_data is not None:
+                try:
+                    if sklearn_available:
+                        interpretation = interpret_prediction(
+                            patient_data=original_data, probability=sklearn_probas[0]
+                        )
+                    elif keras_available:
+                        interpretation = interpret_prediction(
+                            patient_data=original_data, probability=keras_probas[0]
+                        )
+                    else:
+                        interpretation = "No models available for interpretation."
+
+                    results["interpretation"] = interpretation
+                except Exception as e:
+                    logger.warning(f"Error generating interpretation: {e}")
+                    results["interpretation"] = "Error generating interpretation."
+
+            # No model is available
+            if not sklearn_available and not keras_available:
+                results["error"] = "No models available for prediction."
+                if return_interpretation:
+                    results["interpretation"] = "No models available for interpretation."
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error in prediction pipeline: {e}")
+            # Return graceful error
+            return {
+                "error": f"Prediction failed: {str(e)}",
+                "interpretation": "Unable to make prediction due to an error."
+                if return_interpretation
+                else None,
+            }
