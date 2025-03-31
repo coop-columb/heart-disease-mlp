@@ -390,8 +390,9 @@ def evaluate_keras_mlp(
     """
     logger.info("Evaluating Keras MLP model on test data")
 
-    # Get predictions
-    y_pred_proba = model.predict(X_test).flatten()
+    # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
+    pred_raw = model.predict(X_test)
+    y_pred_proba = np.reshape(pred_raw, -1)  # Safer than flatten() or ravel()
     y_pred = (y_pred_proba > 0.5).astype(int)
 
     # Calculate metrics
