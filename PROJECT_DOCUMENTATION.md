@@ -803,7 +803,7 @@ The Heart Disease Prediction system is a robust, production-ready machine learni
    - [ ] Add system architecture diagram
 
 3. **Security & Deployment**:
-   - [ ] Add authentication to API 
+   - [ ] Add authentication to API
    - [ ] Implement backup and recovery procedures
    - [ ] Create environment-specific configuration for dev/staging/prod
 
