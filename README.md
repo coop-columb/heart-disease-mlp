@@ -100,6 +100,9 @@ heart-disease-mlp/
 │   ├── optuna/                    # Hyperparameter tuning results
 │   └── sklearn_mlp_model.joblib   # Scikit-learn model
 ├── notebooks/              # Jupyter notebooks for exploration
+│   ├── heart_disease_prediction_tutorial.ipynb        # Main tutorial notebook
+│   ├── heart_disease_prediction_tutorial_updated.ipynb # Updated tutorial with time module and tabulate
+│   └── test_notebook.ipynb                            # Test notebook for verifying dependencies
 ├── reports/                # Generated reports and visualizations
 │   └── figures/            # Performance visualizations
 ├── scripts/                # Shell scripts for automation
@@ -187,6 +190,9 @@ heart-disease-mlp/
    ```bash
    # Run tests to ensure everything is working
    pytest tests/
+
+   # Verify tutorial notebook dependencies
+   jupyter nbconvert --to html --execute notebooks/test_notebook.ipynb
    ```
 
 ## Usage Guide
