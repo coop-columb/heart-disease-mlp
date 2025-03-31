@@ -136,9 +136,8 @@ heart-disease-mlp/
 │   ├── optuna/                    # Hyperparameter tuning results
 │   └── sklearn_mlp_model.joblib   # Scikit-learn model
 ├── notebooks/              # Jupyter notebooks for exploration
-│   ├── heart_disease_prediction_tutorial.ipynb        # Original tutorial notebook (deprecated)
-│   ├── heart_disease_prediction_tutorial_updated.ipynb # Updated tutorial (deprecated)
-│   ├── heart_disease_prediction_tutorial_working.ipynb # Production-ready tutorial with robust error handling
+│   ├── heart_disease_prediction_tutorial.ipynb        # Original tutorial notebook
+│   ├── heart_disease_prediction_tutorial_fixed.ipynb  # Fixed tutorial with all dependencies
 │   └── test_notebook.ipynb                            # Test notebook for verifying dependencies
 ├── reports/                # Generated reports and visualizations
 │   └── figures/            # Performance visualizations
@@ -224,7 +223,7 @@ heart-disease-mlp/
    jupyter nbconvert --to html --execute notebooks/test_notebook.ipynb
 
    # Run the full tutorial notebook
-   jupyter nbconvert --to html --execute notebooks/heart_disease_prediction_tutorial_working.ipynb
+   jupyter nbconvert --to html --execute notebooks/heart_disease_prediction_tutorial_fixed.ipynb
    ```
 
 ## Usage Guide
@@ -335,7 +334,7 @@ heart-disease-mlp/
 For an interactive tutorial, run the Jupyter notebook:
 
 ```bash
-jupyter notebook notebooks/heart_disease_prediction_tutorial_working.ipynb
+jupyter notebook notebooks/heart_disease_prediction_tutorial_fixed.ipynb
 ```
 
 The tutorial covers:
