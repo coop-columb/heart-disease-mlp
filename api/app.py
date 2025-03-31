@@ -319,9 +319,7 @@ class PatientData(BaseModel):
     cp: int = Field(..., description="Chest pain type (1-4)")
     trestbps: int = Field(..., description="Resting blood pressure (mm Hg)")
     chol: int = Field(..., description="Serum cholesterol (mg/dl)")
-    fbs: int = Field(
-        ..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)"
-    )
+    fbs: int = Field(..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)")
     restecg: int = Field(..., description="Resting ECG results (0-2)")
     thalach: int = Field(..., description="Maximum heart rate achieved")
     exang: int = Field(..., description="Exercise induced angina (0=no, 1=yes)")

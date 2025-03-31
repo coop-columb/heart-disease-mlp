@@ -12,6 +12,9 @@ Usage:
     backup_system.py prune [--keep N] [--cloud] [--storage {s3,azure,gcp}]
 """
 
+# This file contains long lines in logger messages and cloud storage documentation
+# flake8: noqa: E501
+
 import argparse
 import datetime
 import hashlib
@@ -38,6 +41,7 @@ logger = logging.getLogger("backup_system")
 # Make sure logs directory exists
 os.makedirs("logs", exist_ok=True)
 
+
 # Helper function to get a path relative to a base path, or return absolute path if not possible
 def try_relative_path(path: Path, base_path: Path) -> str:
     """
@@ -55,6 +59,7 @@ def try_relative_path(path: Path, base_path: Path) -> str:
     except ValueError:
         # If the path is not relative to the base path, return the absolute path
         return str(path)
+
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent.absolute()
@@ -283,7 +288,7 @@ def upload_to_s3(archive_path: Path, credentials: Dict) -> bool:
 def upload_to_azure(archive_path: Path, credentials: Dict) -> bool:
     """Upload backup archive to Azure Blob Storage."""
     try:
-        from azure.storage.blob import BlobServiceClien
+        from azure.storage.blob import BlobServiceClient
 
         logger.info("Uploading to Azure Blob Storage...")
 
@@ -295,7 +300,7 @@ def upload_to_azure(archive_path: Path, credentials: Dict) -> bool:
             logger.error("Missing required Azure credentials")
             return False
 
-        # Create Azure clien
+        # Create Azure client
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_client = blob_service_client.get_container_client(container_name)
 
@@ -308,7 +313,7 @@ def upload_to_azure(archive_path: Path, credentials: Dict) -> bool:
         return True
 
     except ImportError:
-        logger.error(
+        logger.error(  # noqa: E501
             "azure-storage-blob not installed. Run 'pip install azure-storage-blob' to enable Azure uploads."
         )
         return False
@@ -431,7 +436,7 @@ def download_from_s3(timestamp: str, download_path: Path, credentials: Dict) -> 
 def download_from_azure(timestamp: str, download_path: Path, credentials: Dict) -> Optional[Path]:
     """Download backup archive from Azure Blob Storage."""
     try:
-        from azure.storage.blob import BlobServiceClien
+        from azure.storage.blob import BlobServiceClient
 
         logger.info(f"Downloading from Azure Blob Storage: {timestamp}")
 
@@ -443,7 +448,7 @@ def download_from_azure(timestamp: str, download_path: Path, credentials: Dict) 
             logger.error("Missing required Azure credentials")
             return None
 
-        # Create Azure clien
+        # Create Azure client
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_client = blob_service_client.get_container_client(container_name)
 
@@ -628,7 +633,7 @@ def list_s3_backups(credentials: Dict) -> None:
 def list_azure_backups(credentials: Dict) -> None:
     """List backups in Azure Blob Storage."""
     try:
-        from azure.storage.blob import BlobServiceClien
+        from azure.storage.blob import BlobServiceClient
 
         # Extract Azure credentials
         connection_string = credentials.get("azure_connection_string")
@@ -638,7 +643,7 @@ def list_azure_backups(credentials: Dict) -> None:
             logger.error("Missing required Azure credentials")
             return
 
-        # Create Azure clien
+        # Create Azure client
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_client = blob_service_client.get_container_client(container_name)
 
@@ -727,7 +732,9 @@ def list_gcp_backups(credentials: Dict) -> None:
         logger.error(f"GCP error: {e}")
 
 
-def restore_backup(timestamp: str = None, cloud: bool = False, storage: str = None) -> bool:
+def restore_backup(
+    timestamp: str = None, cloud: bool = False, storage: str = None
+) -> bool:  # noqa: C901
     """
     Restore system from a backup.
 
@@ -968,7 +975,7 @@ def delete_s3_backup(timestamp: str, credentials: Dict) -> bool:
 def delete_azure_backup(timestamp: str, credentials: Dict) -> bool:
     """Delete backup from Azure Blob Storage."""
     try:
-        from azure.storage.blob import BlobServiceClien
+        from azure.storage.blob import BlobServiceClient
 
         logger.info(f"Deleting backup from Azure Blob Storage: {timestamp}")
 
@@ -980,7 +987,7 @@ def delete_azure_backup(timestamp: str, credentials: Dict) -> bool:
             logger.error("Missing required Azure credentials")
             return False
 
-        # Create Azure clien
+        # Create Azure client
         blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         container_client = blob_service_client.get_container_client(container_name)
 

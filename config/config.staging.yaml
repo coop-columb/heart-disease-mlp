@@ -83,14 +83,14 @@ api:
     algorithm: 'HS256'
     access_token_expire_minutes: 30
     token_url: '/auth/token'
-    
+
     # Staging API keys
     api_keys:
       - key: 'staging_api_key'
         name: 'Staging API Key'
       - key: 'test_api_key'
         name: 'Testing API Key'
-    
+
     # Public endpoints (no authentication required)
     public_endpoints:
       - '/health'

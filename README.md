@@ -128,7 +128,7 @@ heart-disease-mlp/
 │   ├── test_data.py        # Data processing tests
 │   ├── test_docker.py      # Docker tests
 │   ├── test_error_handling.py # Error handling tests
-│   ├── test_model_performance.py # Model performance tests 
+│   ├── test_model_performance.py # Model performance tests
 │   └── test_models.py      # Model tests
 ├── backups/                # Backup storage directory
 ├── Dockerfile              # Docker configuration

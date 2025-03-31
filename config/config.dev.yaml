@@ -83,12 +83,12 @@ api:
     algorithm: 'HS256'
     access_token_expire_minutes: 60  # Longer expiry for development convenience
     token_url: '/auth/token'
-    
+
     # Development API keys
     api_keys:
       - key: 'dev_api_key'
         name: 'Development API Key'
-    
+
     # Public endpoints (no authentication required)
     public_endpoints:
       - '/health'

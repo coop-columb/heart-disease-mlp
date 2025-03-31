@@ -69,12 +69,11 @@ def resolve_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
         elif isinstance(value, list):
             # Process each item in the list
             result[key] = [
-                resolve_env_vars(item) if isinstance(item, dict) else item
-                for item in value
+                resolve_env_vars(item) if isinstance(item, dict) else item for item in value
             ]
         elif isinstance(value, str):
             # Replace environment variables in strings
-            pattern = r'\${([A-Za-z0-9_]+)}'
+            pattern = r"\${([A-Za-z0-9_]+)}"
             matches = re.findall(pattern, value)
 
             if matches:

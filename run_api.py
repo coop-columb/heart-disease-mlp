@@ -82,5 +82,5 @@ if __name__ == "__main__":
         host=args.host,
         port=args.port,
         reload=reload_setting,
-        log_level=log_level.lower()
+        log_level=log_level.lower(),
     )

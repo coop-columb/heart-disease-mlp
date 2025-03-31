@@ -18,10 +18,10 @@ services:
       - MODEL_DIR=/app/models
       - ENVIRONMENT=staging
       - LOG_LEVEL=INFO
-      
+
       # Authentication settings
       - JWT_SECRET_KEY=staging_secret_key_for_testing_only
-      
+
       # Backup settings
       - BACKUP_FREQUENCY=daily
       - KEEP_BACKUPS=10
@@ -32,7 +32,7 @@ services:
       - AWS_BUCKET_NAME=your-staging-bucket
     restart: unless-stopped
     command: ["python", "run_api.py", "--host", "0.0.0.0", "--port", "8000"]
-    
+
   backup:
     build:
       context: .

@@ -38,6 +38,16 @@ The API is built using FastAPI, providing automatic OpenAPI documentation, reque
 
 The API implements both JWT token-based authentication and API key authentication. All endpoints except health check and documentation are protected.
 
+### Environment-Specific Authentication
+
+Authentication behavior varies by environment:
+
+| Environment | Authentication | Description |
+|-------------|---------------|-------------|
+| Development | Optional | Authentication can be disabled for easier development |
+| Staging     | Required | Full authentication required, with longer token lifetimes |
+| Production  | Required | Strict authentication with shorter token lifetimes |
+
 ### JWT Authentication
 
 1. Get a token by making a POST request to the `/auth/token` endpoint:
@@ -51,7 +61,7 @@ The API implements both JWT token-based authentication and API key authenticatio
      -H "Authorization: Bearer YOUR_TOKEN_HERE"
    ```
 
-3. Tokens expire after 30 minutes by default. You can request a new token at any time.
+3. Tokens expire after a configured time (30 minutes by default in production, longer in staging, and much longer in development). You can request a new token at any time.
 
 ### API Key Authentication
 
@@ -61,7 +71,7 @@ curl -X GET http://localhost:8000/models/info \
   -H "X-API-Key: YOUR_API_KEY_HERE"
 ```
 
-API keys are configured in the `config.yaml` file under `api.auth.api_keys`.
+API keys are configured in the environment-specific config files (e.g., `config.dev.yaml`, `config.staging.yaml`, `config.prod.yaml`) under `api.auth.api_keys`.
 
 ## Endpoints
 
@@ -418,10 +428,15 @@ Error responses include a JSON object with details:
 
 ## Rate Limiting
 
-The API implements rate limiting to prevent abuse:
+The API implements rate limiting to prevent abuse. The rate limits are environment-specific:
 
-- 100 requests per minute per IP address for the prediction endpoint
-- 200 requests per minute per IP address for other endpoints
+| Environment | Prediction Endpoint | Other Endpoints |
+|-------------|-------------------|-----------------|
+| Development | 500 requests/minute | 1000 requests/minute |
+| Staging     | 200 requests/minute | 500 requests/minute |
+| Production  | 100 requests/minute | 200 requests/minute |
+
+These limits are applied per IP address and can be configured in each environment's config file.
 
 Rate limit headers are included in the response:
 

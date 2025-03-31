@@ -83,9 +83,8 @@ def run_concurrent_tests(num_concurrent: int, num_requests: int) -> List[Tuple[b
             try:
                 success, time_taken = future.result()
                 results.append((success, time_taken))
-                print(
-                    f"Request {request_num+1}/{num_requests}: {'Success' if success else 'Failed'} in {time_taken:.4f}s"
-                )
+                status = "Success" if success else "Failed"
+                print(f"Request {request_num+1}/{num_requests}: {status} in {time_taken:.4f}s")
             except Exception as e:
                 print(f"Request {request_num+1}/{num_requests} generated an exception: {str(e)}")
 

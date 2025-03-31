@@ -27,18 +27,18 @@ The Heart Disease Prediction system supports multiple deployment environments (d
 
 The system supports three standard environments:
 
-1. **Development (`dev`)**: 
+1. **Development (`dev`)**:
    - Used for local development
    - Features hot-reloading, debug logging, and disabled security features
    - Optimized for quick iteration, not performance
 
-2. **Staging (`staging`)**: 
+2. **Staging (`staging`)**:
    - Production-like environment for testing
    - Security features enabled
    - Similar performance characteristics to production
    - Uses test data and credentials
 
-3. **Production (`prod`)**: 
+3. **Production (`prod`)**:
    - Live environment for real-world use
    - Full security features enabled
    - Optimized for performance and reliability

@@ -83,11 +83,11 @@ api:
     algorithm: 'HS256'
     access_token_expire_minutes: 30
     token_url: '/auth/token'
-    
+
     # Production API keys are stored elsewhere for security
     # These will be loaded from environment variables or secure storage
     api_keys: []
-    
+
     # Public endpoints (no authentication required)
     public_endpoints:
       - '/health'

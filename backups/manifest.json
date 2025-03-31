@@ -1,12 +1,39 @@
 {
   "backups": [
     {
-      "timestamp": "20250331_150947",
-      "creation_time": "2025-03-31T15:09:47.161892",
-      "archive": "backups/backup_20250331_150947.tar.gz",
-      "archive_size": 46292,
-      "archive_hash": "0333147094030c415747e07d838473db",
-      "file_count": 10,
+      "timestamp": "20250401_120000",
+      "creation_time": "2025-04-01T12:00:00",
+      "archive": "backups/backup_20250401_120000.tar.gz",
+      "archive_size": 2048,
+      "archive_hash": "0987654321fedcba",
+      "file_count": 1,
+      "missing_files": 0
+    },
+    {
+      "timestamp": "20250331_165031",
+      "creation_time": "2025-03-31T16:50:31.712261",
+      "archive": "/var/folders/85/gb8f_40d4vv60wl8mmhq2d7c0000gn/T/tmpqndvpb18/backup_20250331_165031.tar.gz",
+      "archive_size": 496,
+      "archive_hash": "0bfee30b59fe4cd4ee5089866a91d164",
+      "file_count": 3,
+      "missing_files": 0
+    },
+    {
+      "timestamp": "20250331_164746",
+      "creation_time": "2025-03-31T16:47:46.571930",
+      "archive": "/var/folders/85/gb8f_40d4vv60wl8mmhq2d7c0000gn/T/tmpc2icch38/backup_20250331_164746.tar.gz",
+      "archive_size": 507,
+      "archive_hash": "fb364a8533bfa30a6293e9d6531da0d5",
+      "file_count": 3,
+      "missing_files": 0
+    },
+    {
+      "timestamp": "20250331_164706",
+      "creation_time": "2025-03-31T16:47:06.985072",
+      "archive": "/var/folders/85/gb8f_40d4vv60wl8mmhq2d7c0000gn/T/tmp4iwdq6ia/backup_20250331_164706.tar.gz",
+      "archive_size": 505,
+      "archive_hash": "7c0201925318df1952cd877d2d02001c",
+      "file_count": 3,
       "missing_files": 0
     }
   ]

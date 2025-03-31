@@ -16,7 +16,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
 sys.path.insert(0, project_root)
 
-from api.app import app
+from api.app import app  # noqa: E402
 
 
 @pytest.fixture

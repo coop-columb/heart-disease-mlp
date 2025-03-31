@@ -119,10 +119,16 @@ The Heart Disease Prediction system employs a layered architecture that separate
 - Provide common functionality used across layers
 - Centralize configuration management
 - Implement logging and error handling
+- Detect and load environment-specific configurations
 
 **Key Components**:
-- `src/utils.py`: Utility functions for configuration loading, logging setup, etc.
-- `config/config.yaml`: Centralized configuration file
+- `src/utils.py`: Utility functions for configuration loading, environment detection, logging setup, etc.
+- Environment-specific configuration files:
+  - `config/config.dev.yaml`: Development environment configuration
+  - `config/config.staging.yaml`: Staging environment configuration
+  - `config/config.prod.yaml`: Production environment configuration
+- `scripts/run_environment.sh`: Script for running the system in different environments
+- `scripts/generate_env_file.py`: Script for generating environment-specific .env files
 
 ## Interactions and Data Flow
 
@@ -182,29 +188,47 @@ The system implements several optimizations for high performance:
    - Graceful degradation when models are unavailable
    - Appropriate HTTP status codes for different error types
 
-3. **Planned Enhancements**:
-   - API authentication and authorization
+3. **Security Features**:
+   - API authentication (JWT and API key)
+   - Environment-specific security settings
    - Role-based access control
-   - Environment-specific configuration
    - Secure deployment procedures
 
 ## Deployment Architecture
 
-The system is designed to be deployed in various environments:
+The system is designed to be deployed in multiple environments with environment-specific configurations:
 
-1. **Local Development**:
-   - Run directly with Python and uvicorn
-   - Configuration via local config file
+1. **Development Environment**:
+   - Run directly with Python and uvicorn or with Docker
+   - Development-specific configuration (`config.dev.yaml`)
+   - Debug-level logging and monitoring
+   - Authentication optionally disabled
+   - Larger cache sizes and longer TTLs
+   - Run with `./scripts/run_environment.sh --env=dev`
 
-2. **Docker Container**:
+2. **Staging Environment**:
    - Containerized deployment with Docker
-   - Multi-stage build for smaller image size
-   - Environment variables for configuration
+   - Staging-specific configuration (`config.staging.yaml`)
+   - Standard logging levels
+   - Full authentication enabled
+   - Moderate cache sizes and TTLs
+   - Regular backups enabled
+   - Run with `./scripts/run_environment.sh --env=staging`
 
-3. **Orchestrated Deployment** (planned):
+3. **Production Environment**:
+   - Containerized deployment with Docker
+   - Production-specific configuration (`config.prod.yaml`)
+   - Minimal logging (warnings and errors only)
+   - Strict authentication requirements
+   - Optimized cache settings
+   - Regular backups with redundancy
+   - Run with `./scripts/run_environment.sh --env=prod`
+
+4. **Orchestrated Deployment** (planned):
    - Kubernetes deployment for scaling
    - Load balancing across multiple instances
    - Distributed caching with Redis
+   - Environment-specific Kubernetes configurations
 
 ## Conclusion
 

@@ -4,10 +4,10 @@ Tests for the backup and recovery system.
 Note: We need to modify sys.path before importing from scripts
 """  # noqa: E402
 
-import sys
-import os
 import json
+import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from unittest import mock
@@ -17,7 +17,7 @@ import pytest
 # Add project root to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from scripts.backup_system import (
+from scripts.backup_system import (  # noqa: E402
     create_backup,
     get_file_hash,
     list_backups,
@@ -34,14 +34,15 @@ def temp_backup_dir():
 
     # Create manifest directory structure
     os.makedirs(temp_dir, exist_ok=True)
-    
+
     # Create empty manifest file with basic structure
     with open(temp_dir / "manifest.json", "w") as f:
         json.dump({"backups": []}, f)
 
     # Mock BACKUP_DIR and BACKUP_MANIFEST_FILE in the backup_system module
-    with mock.patch("scripts.backup_system.BACKUP_DIR", temp_dir), \
-         mock.patch("scripts.backup_system.BACKUP_MANIFEST_FILE", temp_dir / "manifest.json"):
+    with mock.patch("scripts.backup_system.BACKUP_DIR", temp_dir), mock.patch(
+        "scripts.backup_system.BACKUP_MANIFEST_FILE", temp_dir / "manifest.json"
+    ):
         yield temp_dir
 
     # Clean up

@@ -18,10 +18,10 @@ services:
       - MODEL_DIR=/app/models
       - ENVIRONMENT=${ENVIRONMENT:-dev}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      
+
       # Authentication settings
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev_secret_key}
-      
+
       # Backup settings
       - BACKUP_FREQUENCY=${BACKUP_FREQUENCY:-daily}
       - KEEP_BACKUPS=${KEEP_BACKUPS:-5}
@@ -30,7 +30,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
       - AWS_BUCKET_NAME=${AWS_BUCKET_NAME:-}
-      
+
       # Database settings (if applicable)
       - DB_HOST=${DB_HOST:-localhost}
       - DB_PORT=${DB_PORT:-5432}
@@ -39,7 +39,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-password}
     restart: unless-stopped
     command: ["python", "run_api.py", "--host", "0.0.0.0", "--port", "8000"]
-    
+
   # Uncomment to enable scheduled backups (optional)
   # backup:
   #   build:

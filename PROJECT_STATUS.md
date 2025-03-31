@@ -107,7 +107,7 @@ The most recent enhancements include:
 2. Implemented comprehensive backup and recovery system
    - Created backup_system.py with local and cloud storage support
    - Added backup.sh shell wrapper for convenient CLI usage
-   - Implemented cloud storage integration (AWS S3, Azure, GCP) 
+   - Implemented cloud storage integration (AWS S3, Azure, GCP)
    - Added scheduled backup capability for CI/CD integration
    - Added backup management features (listing, restoring, pruning)
 
@@ -134,7 +134,7 @@ The most recent enhancements include:
 
 ## Conclusion
 
-The Heart Disease Prediction system has achieved its primary goals of creating a robust, accurate prediction engine with a user-friendly interface. The system is now production-ready with authentication, backup and recovery procedures, Docker containerization, comprehensive testing, and thorough documentation. 
+The Heart Disease Prediction system has achieved its primary goals of creating a robust, accurate prediction engine with a user-friendly interface. The system is now production-ready with authentication, backup and recovery procedures, Docker containerization, comprehensive testing, and thorough documentation.
 
 All major performance and security milestones have been completed, including implementing caching for predictions, optimizing batch processing, adding JWT and API key authentication, and implementing a comprehensive backup and recovery system.
 

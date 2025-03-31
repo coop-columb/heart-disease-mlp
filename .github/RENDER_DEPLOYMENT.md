@@ -118,7 +118,7 @@ To add environment variables:
 
 Common issues and solutions:
 
-1. **Build failures**: 
+1. **Build failures**:
    - Check your Dockerfile for errors
    - Ensure all dependencies are correctly specified
 
