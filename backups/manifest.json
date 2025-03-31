@@ -1,0 +1,22 @@
+{
+  "backups": [
+    {
+      "timestamp": "20250401_120000",
+      "creation_time": "2025-04-01T12:00:00",
+      "archive": "backups/backup_20250401_120000.tar.gz",
+      "archive_size": 2048,
+      "archive_hash": "0987654321fedcba",
+      "file_count": 1,
+      "missing_files": 0
+    },
+    {
+      "timestamp": "20250331_150534",
+      "creation_time": "2025-03-31T15:05:34.750361",
+      "archive": "backups/backup_20250331_150534.tar.gz",
+      "archive_size": 46291,
+      "archive_hash": "c078a900d7e508faf774db855700bca6",
+      "file_count": 10,
+      "missing_files": 0
+    }
+  ]
+}
