@@ -811,8 +811,8 @@ The Heart Disease Prediction system is a robust, production-ready machine learni
    - [x] Implement model caching for improved throughput
 
 2. **Documentation**:
-   - [ ] Create interactive tutorial notebook
-   - [ ] Add system architecture diagram
+   - [x] Create interactive tutorial notebook
+   - [x] Add system architecture diagram
 
 3. **Security & Deployment**:
    - [ ] Add authentication to API
