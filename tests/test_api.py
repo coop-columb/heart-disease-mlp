@@ -53,7 +53,9 @@ def test_root_endpoint(client):
     """Test the root endpoint."""
     response = client.get("/")
     assert response.status_code == 200
-    assert "message" in response.json()
+    # Root endpoint now returns HTML content instead of JSON
+    assert "<!DOCTYPE html>" in response.text
+    assert "<title>Heart Disease Prediction</title>" in response.text
 
 
 def test_health_check(client):
