@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #d9534f;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        .form-group {
+            flex: 0 0 48%;
+        }
+        button {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background-color: #c9302c;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid #d9534f;
+            background-color: #f5f5f5;
+            display: none;
+        }
+        .risk-high {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .risk-moderate {
+            color: #f0ad4e;
+            font-weight: bold;
+        }
+        .risk-low {
+            color: #5cb85c;
+            font-weight: bold;
+        }
+        .feature-explainer {
+            font-size: 12px;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Heart Disease Risk Assessment</h1>
+    <div class="container">
+        <form id="predictionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" min="18" max="100" required value="61">
+                </div>
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <input type="number" id="sex" name="sex" min="0" max="1" required value="1">
+                    <div class="feature-explainer">0 = Female, 1 = Male</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cp">Chest Pain Type</label>
+                    <input type="number" id="cp" name="cp" min="0" max="3" required value="3">
+                    <div class="feature-explainer">0-3 (0: typical angina, 1: atypical angina, 2: non-anginal pain, 3: asymptomatic)</div>
+                </div>
+                <div class="form-group">
+                    <label for="trestbps">Resting Blood Pressure (mm Hg)</label>
+                    <input type="number" id="trestbps" name="trestbps" min="80" max="200" required value="140">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="chol">Cholesterol (mg/dl)</label>
+                    <input type="number" id="chol" name="chol" min="100" max="600" required value="240">
+                </div>
+                <div class="form-group">
+                    <label for="fbs">Fasting Blood Sugar > 120 mg/dl</label>
+                    <input type="number" id="fbs" name="fbs" min="0" max="1" required value="1">
+                    <div class="feature-explainer">0 = No, 1 = Yes</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="restecg">Resting ECG Results</label>
+                    <input type="number" id="restecg" name="restecg" min="0" max="2" required value="1">
+                    <div class="feature-explainer">0-2 (0: normal, 1: ST-T wave abnormality, 2: left ventricular hypertrophy)</div>
+                </div>
+                <div class="form-group">
+                    <label for="thalach">Maximum Heart Rate</label>
+                    <input type="number" id="thalach" name="thalach" min="50" max="220" required value="150">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="exang">Exercise Induced Angina</label>
+                    <input type="number" id="exang" name="exang" min="0" max="1" required value="1">
+                    <div class="feature-explainer">0 = No, 1 = Yes</div>
+                </div>
+                <div class="form-group">
+                    <label for="oldpeak">ST Depression Induced by Exercise</label>
+                    <input type="number" id="oldpeak" name="oldpeak" min="0" max="10" step="0.1" required value="2.4">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="slope">Slope of Peak Exercise ST Segment</label>
+                    <input type="number" id="slope" name="slope" min="1" max="3" required value="2">
+                    <div class="feature-explainer">1-3 (1: upsloping, 2: flat, 3: downsloping)</div>
+                </div>
+                <div class="form-group">
+                    <label for="ca">Number of Major Vessels Colored by Fluoroscopy</label>
+                    <input type="number" id="ca" name="ca" min="0" max="3" required value="1">
+                    <div class="feature-explainer">0-3</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="thal">Thalassemia</label>
+                    <input type="number" id="thal" name="thal" min="1" max="7" required value="3">
+                    <div class="feature-explainer">1-7 (1: normal, 2: fixed defect, 3: reversible defect, 7: reversible defect)</div>
+                </div>
+                <div class="form-group">
+                    <label for="model">Model to Use</label>
+                    <select id="model" name="model" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Ensemble (Default)</option>
+                        <option value="sklearn">Scikit-learn MLP</option>
+                        <option value="keras">Keras MLP</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Predict Heart Disease Risk</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key === 'model') continue; // Handle separately
+                if (key === 'oldpeak') {
+                    data[key] = parseFloat(value);
+                } else {
+                    data[key] = parseInt(value);
+                }
+            }
+            
+            // Get selected model
+            const model = document.getElementById('model').value;
+            const url = model ? `/predict?model=${model}` : '/predict';
+            
+            try {
+                // Show loading state
+                document.getElementById('result').innerHTML = 'Loading prediction...';
+                document.getElementById('result').style.display = 'block';
+                
+                // Send request to API
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Error making prediction');
+                }
+                
+                const result = await response.json();
+                
+                // Format the result
+                let riskClass = 'risk-moderate';
+                if (result.risk_level === 'HIGH') riskClass = 'risk-high';
+                if (result.risk_level === 'LOW') riskClass = 'risk-low';
+                
+                // Display the result
+                document.getElementById('result').innerHTML = `
+                    <h3>Prediction Result</h3>
+                    <p><strong>Prediction:</strong> ${result.prediction === 1 ? 'Positive (Heart Disease)' : 'Negative (No Heart Disease)'}</p>
+                    <p><strong>Probability:</strong> ${(result.probability * 100).toFixed(1)}%</p>
+                    <p><strong>Risk Level:</strong> <span class="${riskClass}">${result.risk_level}</span></p>
+                    <p><strong>Model Used:</strong> ${result.model_used}</p>
+                    <h4>Clinical Interpretation</h4>
+                    <p>${result.interpretation ? result.interpretation.replace(/\n/g, '<br>') : 'No interpretation available'}</p>
+                `;
+                document.getElementById('result').style.display = 'block';
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+                document.getElementById('result').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
