@@ -72,6 +72,7 @@ def test_missing_model_fallback(sample_patient_data):
             return {
                 "keras_predictions": [1],
                 "keras_probabilities": [0.75],
+                "model_used": "keras_mlp",  # Add model_used field to match current implementation
             }
 
         predictor_mock.predict = mock_predict
