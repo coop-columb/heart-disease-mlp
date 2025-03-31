@@ -27,6 +27,7 @@ pre-commit>=2.13.0
 # Jupyter
 jupyter>=1.0.0
 ipykernel>=6.0.0
+tabulate>=0.8.10
 
 # Documentation
 markdown>=3.3.0
