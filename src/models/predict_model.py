@@ -490,9 +490,9 @@ class HeartDiseasePredictor:
             # Return graceful error
             return {
                 "error": f"Prediction failed: {str(e)}",
-                "interpretation": "Unable to make prediction due to an error."
-                if return_interpretation
-                else None,
+                "interpretation": (
+                    "Unable to make prediction due to an error." if return_interpretation else None
+                ),
             }
 
     def get_cache_stats(self):
