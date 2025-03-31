@@ -52,6 +52,8 @@ The system exposes a RESTful API with the following endpoints:
 3. **Models Information (`/models/info`)**: Details about available models and their status
 4. **Single Prediction (`/predict`)**: Endpoint for single patient prediction
 5. **Batch Prediction (`/predict/batch`)**: Endpoint for multiple patient predictions
+6. **Batch Configuration (`/batch/config`)**: Get or update batch processing configuration
+7. **Cache Management (`/cache/stats`, `/cache/config`, `/cache/clear`)**: Manage prediction cache
 
 API features include:
 - CORS support for cross-origin requests
@@ -59,6 +61,8 @@ API features include:
 - Model selection parameter
 - Robust error handling
 - Detailed logging
+- LRU prediction caching with configurable TTL
+- Optimized batch processing with chunking and parallel execution
 
 ### 2.4 Data Processing Capabilities
 
@@ -469,7 +473,15 @@ The tests cover:
 - Added model fallback mechanisms when specific models are unavailable
 - Updated API response models to handle error states
 
-### 7.4 Code Quality Improvements
+### 7.4 Performance Optimizations
+
+- Implemented LRU caching for prediction results with configurable TTL
+- Added batch chunking and parallel processing for large prediction batches
+- Optimized cache key generation based on input data hash
+- Created management endpoints for cache configuration and statistics
+- Added graceful expiration of cached results
+
+### 7.5 Code Quality Improvements
 
 - Fixed pandas FutureWarning about chained assignment in preprocess.py
 - Enhanced logging throughout the system
@@ -532,7 +544,7 @@ The tests cover:
 2. **API Enhancements**:
    - Add user authentication/authorization
    - Implement rate limiting
-   - Add caching layer for repeated predictions
+   - ✅ Add caching layer for repeated predictions
    - Create versioned API endpoints
 
 3. **Feature Engineering**:
@@ -795,8 +807,8 @@ The Heart Disease Prediction system is a robust, production-ready machine learni
 
 1. **Optimization**:
    - [x] Address TensorFlow NumPy array conversion warning
-   - [ ] Optimize batch prediction performance for large batches
-   - [ ] Implement model caching for improved throughput
+   - [x] Optimize batch prediction performance for large batches
+   - [x] Implement model caching for improved throughput
 
 2. **Documentation**:
    - [ ] Create interactive tutorial notebook

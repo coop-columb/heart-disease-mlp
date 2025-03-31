@@ -3,8 +3,13 @@ Module for making predictions with trained heart disease models.
 """
 
 # flake8: noqa: E501
+import datetime
+import hashlib
+import json
 import logging
 import os
+import time
+from collections import OrderedDict
 
 import joblib
 import numpy as np
@@ -12,6 +17,7 @@ import pandas as pd
 from tensorflow import keras
 
 from src.models.mlp_model import combine_predictions, interpret_prediction
+from src.utils import load_config
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +25,178 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# Load configuration
+config = load_config()
+cache_config = config.get("api", {}).get("caching", {})
+CACHE_ENABLED = cache_config.get("enabled", True)
+CACHE_MAX_SIZE = cache_config.get("max_size", 1000)
+CACHE_TTL = cache_config.get("ttl", 3600)  # 1 hour default
+CACHE_HASH_ALGORITHM = cache_config.get("hash_algorithm", "md5")
+
+
+class PredictionCache:
+    """Cache for storing and retrieving prediction results."""
+
+    def __init__(self, max_size=CACHE_MAX_SIZE, ttl=CACHE_TTL):
+        """
+        Initialize the prediction cache.
+
+        Args:
+            max_size: Maximum number of entries in the cache
+            ttl: Time-to-live in seconds for cache entries
+        """
+        self.max_size = max_size
+        self.ttl = ttl
+        self.cache = OrderedDict()  # OrderedDict for LRU behavior
+        self.stats = {
+            "hits": 0,
+            "misses": 0,
+            "entries": 0,
+            "evictions": 0,
+            "created_at": datetime.datetime.now().isoformat(),
+        }
+
+    def _generate_key(self, data, model=None):
+        """
+        Generate a cache key from input data and model.
+
+        Args:
+            data: Input data for prediction
+            model: Optional model name to use
+
+        Returns:
+            String hash key
+        """
+        # Convert data to a consistent format
+        if isinstance(data, dict):
+            # Sort to ensure consistent order
+            serialized = json.dumps(data, sort_keys=True)
+        elif isinstance(data, pd.DataFrame):
+            # Convert DataFrame to sorted dict
+            serialized = json.dumps(data.to_dict(orient="records"), sort_keys=True)
+        else:
+            # Convert any other type to string
+            serialized = str(data)
+
+        # Add model to the key if provided
+        if model:
+            serialized += f"_model_{model}"
+
+        # Create hash using configured algorithm
+        if CACHE_HASH_ALGORITHM == "md5":
+            return hashlib.md5(serialized.encode()).hexdigest()
+        elif CACHE_HASH_ALGORITHM == "sha1":
+            return hashlib.sha1(serialized.encode()).hexdigest()
+        else:
+            # Default to md5
+            return hashlib.md5(serialized.encode()).hexdigest()
+
+    def get(self, data, model=None):
+        """
+        Get cached prediction result.
+
+        Args:
+            data: Input data for prediction
+            model: Optional model name to use
+
+        Returns:
+            Cached prediction result or None if not in cache
+        """
+        if not CACHE_ENABLED:
+            return None
+
+        key = self._generate_key(data, model)
+
+        if key in self.cache:
+            entry = self.cache[key]
+            current_time = time.time()
+
+            # Check if entry is expired
+            if current_time - entry["timestamp"] > self.ttl:
+                # Remove expired entry
+                del self.cache[key]
+                self.stats["entries"] -= 1
+                self.stats["misses"] += 1
+                return None
+
+            # Move to end (most recently used)
+            self.cache.move_to_end(key)
+            self.stats["hits"] += 1
+            return entry["result"]
+
+        self.stats["misses"] += 1
+        return None
+
+    def put(self, data, model, result):
+        """
+        Store prediction result in cache.
+
+        Args:
+            data: Input data for prediction
+            model: Model name used for prediction
+            result: Prediction result to cache
+        """
+        if not CACHE_ENABLED:
+            return
+
+        key = self._generate_key(data, model)
+
+        # Create cache entry
+        entry = {
+            "timestamp": time.time(),
+            "result": result,
+        }
+
+        # Add to cache
+        if key in self.cache:
+            # Just update existing entry
+            self.cache[key] = entry
+            # Move to end (most recently used)
+            self.cache.move_to_end(key)
+        else:
+            # Check if cache is full
+            if len(self.cache) >= self.max_size:
+                # Remove oldest entry (first item in OrderedDict)
+                self.cache.popitem(last=False)
+                self.stats["evictions"] += 1
+                self.stats["entries"] -= 1
+
+            # Add new entry
+            self.cache[key] = entry
+            self.stats["entries"] += 1
+
+    def clear(self):
+        """Clear the cache."""
+        self.cache.clear()
+        self.stats["entries"] = 0
+        self.stats["evictions"] = 0
+        self.stats["hits"] = 0
+        self.stats["misses"] = 0
+        self.stats["created_at"] = datetime.datetime.now().isoformat()
+
+    def get_stats(self):
+        """
+        Get cache statistics.
+
+        Returns:
+            Dictionary of cache statistics
+        """
+        hit_rate = 0
+        if (self.stats["hits"] + self.stats["misses"]) > 0:
+            hit_rate = self.stats["hits"] / (self.stats["hits"] + self.stats["misses"])
+
+        return {
+            "enabled": CACHE_ENABLED,
+            "max_size": self.max_size,
+            "ttl_seconds": self.ttl,
+            "entries": self.stats["entries"],
+            "hits": self.stats["hits"],
+            "misses": self.stats["misses"],
+            "hit_rate": round(hit_rate, 3),
+            "evictions": self.stats["evictions"],
+            "created_at": self.stats["created_at"],
+        }
 
 
 class HeartDiseasePredictor:
@@ -38,6 +216,9 @@ class HeartDiseasePredictor:
         self.has_sklearn_model = False
         self.has_keras_model = False
         self.has_ensemble_model = False
+
+        # Initialize prediction cache
+        self.cache = PredictionCache(max_size=CACHE_MAX_SIZE, ttl=CACHE_TTL)
 
         # Load models
         self.load_models()
@@ -105,7 +286,14 @@ class HeartDiseasePredictor:
             logger.warning("Preprocessor not available. Using raw input data.")
             return patient_df.values
 
-    def predict(self, patient_data, return_probabilities=True, return_interpretation=False):
+    def predict(
+        self,
+        patient_data,
+        return_probabilities=True,
+        return_interpretation=False,
+        model=None,
+        use_cache=True,
+    ):
         """
         Make predictions for patient data.
 
@@ -113,11 +301,44 @@ class HeartDiseasePredictor:
             patient_data: Dictionary or DataFrame of patient features
             return_probabilities: Whether to return probability estimates
             return_interpretation: Whether to return clinical interpretation
+            model: Optional specific model to use (sklearn, keras, ensemble)
+            use_cache: Whether to use the prediction cache
 
         Returns:
             Dictionary containing predictions and optionally probabilities
             and interpretation
         """
+        # Check cache first if enabled
+        if use_cache and CACHE_ENABLED:
+            # Try to get from cache
+            cached_result = self.cache.get(patient_data, model)
+            if cached_result is not None:
+                logger.info("Using cached prediction result")
+
+                # Make sure we include interpretation if requested and available
+                if (
+                    return_interpretation
+                    and "interpretation" not in cached_result
+                    and isinstance(patient_data, dict)
+                ):
+                    # Add interpretation if not in cached result
+                    model_used = cached_result.get("model_used", "ensemble")
+                    probability = None
+
+                    if model_used == "ensemble" and "ensemble_probabilities" in cached_result:
+                        probability = cached_result["ensemble_probabilities"][0]
+                    elif model_used == "sklearn_mlp" and "sklearn_probabilities" in cached_result:
+                        probability = cached_result["sklearn_probabilities"][0]
+                    elif model_used == "keras_mlp" and "keras_probabilities" in cached_result:
+                        probability = cached_result["keras_probabilities"][0]
+
+                    if probability is not None:
+                        cached_result["interpretation"] = interpret_prediction(
+                            patient_data=patient_data, probability=probability
+                        )
+
+                return cached_result
+
         logger.info("Making predictions")
 
         try:
@@ -139,8 +360,12 @@ class HeartDiseasePredictor:
             sklearn_probas = None
             keras_probas = None
 
-            # Make predictions with scikit-learn model
-            if self.sklearn_model is not None:
+            # Track which model was actually used for caching
+            model_used = None
+
+            # Make predictions based on requested model or available models
+            # If specific model requested, only try that one
+            if model == "sklearn" and self.sklearn_model is not None:
                 try:
                     sklearn_probas = self.sklearn_model.predict_proba(X)[:, 1]
                     sklearn_preds = (sklearn_probas >= 0.5).astype(int)
@@ -148,11 +373,10 @@ class HeartDiseasePredictor:
                     if return_probabilities:
                         results["sklearn_probabilities"] = sklearn_probas
                     sklearn_available = True
+                    model_used = "sklearn_mlp"
                 except Exception as e:
                     logger.warning(f"Error making scikit-learn predictions: {e}")
-
-            # Make predictions with Keras model
-            if self.keras_model is not None:
+            elif model == "keras" and self.keras_model is not None:
                 try:
                     # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
                     keras_pred_raw = self.keras_model.predict(X)
@@ -162,11 +386,40 @@ class HeartDiseasePredictor:
                     if return_probabilities:
                         results["keras_probabilities"] = keras_probas
                     keras_available = True
+                    model_used = "keras_mlp"
                 except Exception as e:
                     logger.warning(f"Error making Keras predictions: {e}")
+            # If ensemble is requested or no specific model, try both
+            else:
+                # Try scikit-learn
+                if self.sklearn_model is not None:
+                    try:
+                        sklearn_probas = self.sklearn_model.predict_proba(X)[:, 1]
+                        sklearn_preds = (sklearn_probas >= 0.5).astype(int)
+                        results["sklearn_predictions"] = sklearn_preds
+                        if return_probabilities:
+                            results["sklearn_probabilities"] = sklearn_probas
+                        sklearn_available = True
+                    except Exception as e:
+                        logger.warning(f"Error making scikit-learn predictions: {e}")
 
-            # Combine predictions if both models are available
-            if sklearn_available and keras_available:
+                # Try Keras
+                if self.keras_model is not None:
+                    try:
+                        # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
+                        keras_pred_raw = self.keras_model.predict(X)
+                        keras_probas = np.reshape(keras_pred_raw, -1)  # Safer than ravel()
+                        keras_preds = (keras_probas >= 0.5).astype(int)
+                        results["keras_predictions"] = keras_preds
+                        if return_probabilities:
+                            results["keras_probabilities"] = keras_probas
+                        keras_available = True
+                    except Exception as e:
+                        logger.warning(f"Error making Keras predictions: {e}")
+
+            # Use ensemble if both are available and no specific model was requested
+            # or ensemble was specifically requested
+            if (model is None or model == "ensemble") and sklearn_available and keras_available:
                 try:
                     combined_probas = combine_predictions(
                         sklearn_probas, keras_probas, method="mean"
@@ -177,6 +430,7 @@ class HeartDiseasePredictor:
                     results["ensemble_predictions"] = combined_preds
                     if return_probabilities:
                         results["ensemble_probabilities"] = combined_probas
+                    model_used = "ensemble"
 
                     # Use ensemble probabilities for interpretation
                     if return_interpretation and original_data is not None:
@@ -187,18 +441,27 @@ class HeartDiseasePredictor:
                 except Exception as e:
                     logger.warning(f"Error combining predictions: {e}")
                     self.has_ensemble_model = False
+                    # Fall back to available model
+                    if sklearn_available:
+                        model_used = "sklearn_mlp"
+                    elif keras_available:
+                        model_used = "keras_mlp"
 
-            # Use available model if only one is loaded
+            # Use available model if ensemble not used and interpretation is requested
             elif return_interpretation and original_data is not None:
                 try:
                     if sklearn_available:
                         interpretation = interpret_prediction(
                             patient_data=original_data, probability=sklearn_probas[0]
                         )
+                        if not model_used:
+                            model_used = "sklearn_mlp"
                     elif keras_available:
                         interpretation = interpret_prediction(
                             patient_data=original_data, probability=keras_probas[0]
                         )
+                        if not model_used:
+                            model_used = "keras_mlp"
                     else:
                         interpretation = "No models available for interpretation."
 
@@ -212,6 +475,13 @@ class HeartDiseasePredictor:
                 results["error"] = "No models available for prediction."
                 if return_interpretation:
                     results["interpretation"] = "No models available for interpretation."
+            else:
+                # Add model_used to results
+                results["model_used"] = model_used
+
+                # Cache the result if we have a valid prediction and caching is enabled
+                if use_cache and CACHE_ENABLED and model_used is not None:
+                    self.cache.put(patient_data, model, results)
 
             return results
 
@@ -224,3 +494,22 @@ class HeartDiseasePredictor:
                 if return_interpretation
                 else None,
             }
+
+    def get_cache_stats(self):
+        """
+        Get cache statistics.
+
+        Returns:
+            Dictionary of cache statistics
+        """
+        return self.cache.get_stats()
+
+    def clear_cache(self):
+        """
+        Clear the prediction cache.
+
+        Returns:
+            Status message
+        """
+        self.cache.clear()
+        return {"status": "success", "message": "Cache cleared successfully"}
