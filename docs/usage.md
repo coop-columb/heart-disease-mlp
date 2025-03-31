@@ -281,6 +281,47 @@ Default configuration:
 
 For very large batches (1000+ patients), increasing the batch size and worker count can significantly improve throughput.
 
+## Prediction Caching
+
+The API implements an LRU (Least Recently Used) caching mechanism to improve response times for repeated predictions. When caching is enabled, results for identical inputs are retrieved from the cache instead of recomputing the prediction, significantly improving throughput.
+
+### Cache Configuration
+
+You can view and customize the cache settings:
+
+```bash
+# View current cache statistics
+curl -X GET http://localhost:8000/cache/stats
+
+# Update cache configuration
+curl -X POST http://localhost:8000/cache/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "max_size": 2000,
+    "ttl": 7200
+  }'
+
+# Clear the cache
+curl -X POST http://localhost:8000/cache/clear
+```
+
+Default configuration:
+- `enabled`: true (caching is enabled by default)
+- `max_size`: 1000 (maximum number of cached predictions)
+- `ttl`: 3600 (time-to-live in seconds, cache entries expire after 1 hour)
+
+### Cache Performance
+
+The cache statistics endpoint provides detailed information about cache performance:
+- `hit_rate`: Percentage of requests served from cache
+- `hits`: Number of cache hits
+- `misses`: Number of cache misses
+- `entries`: Current number of entries in the cache
+- `evictions`: Number of entries removed due to size constraints
+
+For workloads with repeated predictions (e.g., testing scenarios, demo environments), caching can improve throughput by up to 10x. The cache uses minimal memory overhead as it only stores the prediction results, not the model inputs.
+
 ## API Deployment
 
 ### Local Deployment

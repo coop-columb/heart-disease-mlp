@@ -66,6 +66,12 @@ BATCH_SIZE = config.get("api", {}).get("batch_size", 50)  # Default chunk size o
 MAX_WORKERS = config.get("api", {}).get("max_workers", 4)  # Default to 4 parallel workers
 PERFORMANCE_LOGGING = config.get("api", {}).get("performance_logging", True)
 
+# Cache configuration
+cache_config = config.get("api", {}).get("caching", {})
+CACHE_ENABLED = cache_config.get("enabled", True)
+CACHE_MAX_SIZE = cache_config.get("max_size", 1000)
+CACHE_TTL = cache_config.get("ttl", 3600)  # 1 hour default
+
 # Initialize model predictor
 model_predictor = HeartDiseasePredictor(model_dir="models")
 
@@ -111,9 +117,13 @@ def process_patient_chunk(patients_chunk, model_name=None):
 
     for i, patient_dict in enumerate(patients_chunk):
         try:
-            # Make prediction for this patient
+            # Make prediction for this patient with caching
             prediction_result = model_predictor.predict(
-                patient_dict, return_probabilities=True, return_interpretation=True
+                patient_dict,
+                return_probabilities=True,
+                return_interpretation=True,
+                model=model_name,
+                use_cache=True,
             )
 
             # Check for error in prediction result
@@ -134,32 +144,47 @@ def process_patient_chunk(patients_chunk, model_name=None):
             prediction = None
             probability = None
 
-            # Try the specifically requested model first
-            if model_name == "sklearn" and "sklearn_predictions" in prediction_result:
-                prediction = prediction_result["sklearn_predictions"][0]
-                probability = prediction_result.get("sklearn_probabilities", [None])[0]
-                model_used = "sklearn_mlp"
-            elif model_name == "keras" and "keras_predictions" in prediction_result:
-                prediction = prediction_result["keras_predictions"][0]
-                probability = prediction_result.get("keras_probabilities", [None])[0]
-                model_used = "keras_mlp"
-            elif model_name == "ensemble" and "ensemble_predictions" in prediction_result:
-                prediction = prediction_result["ensemble_predictions"][0]
-                probability = prediction_result.get("ensemble_probabilities", [None])[0]
-                model_used = "ensemble"
-            # If no specific model requested or requested model not available, use best available
-            elif "ensemble_predictions" in prediction_result:
-                prediction = prediction_result["ensemble_predictions"][0]
-                probability = prediction_result.get("ensemble_probabilities", [None])[0]
-                model_used = "ensemble"
-            elif "sklearn_predictions" in prediction_result:
-                prediction = prediction_result["sklearn_predictions"][0]
-                probability = prediction_result.get("sklearn_probabilities", [None])[0]
-                model_used = "sklearn_mlp"
-            elif "keras_predictions" in prediction_result:
-                prediction = prediction_result["keras_predictions"][0]
-                probability = prediction_result.get("keras_probabilities", [None])[0]
-                model_used = "keras_mlp"
+            # Get the model that was used from the prediction result
+            if "model_used" in prediction_result:
+                model_used = prediction_result["model_used"]
+
+                # Get prediction and probability based on the model used
+                if model_used == "sklearn_mlp" and "sklearn_predictions" in prediction_result:
+                    prediction = prediction_result["sklearn_predictions"][0]
+                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                elif model_used == "keras_mlp" and "keras_predictions" in prediction_result:
+                    prediction = prediction_result["keras_predictions"][0]
+                    probability = prediction_result.get("keras_probabilities", [None])[0]
+                elif model_used == "ensemble" and "ensemble_predictions" in prediction_result:
+                    prediction = prediction_result["ensemble_predictions"][0]
+                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
+            else:
+                # Fall back to old behavior if model_used not found
+                if model_name == "sklearn" and "sklearn_predictions" in prediction_result:
+                    prediction = prediction_result["sklearn_predictions"][0]
+                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                    model_used = "sklearn_mlp"
+                elif model_name == "keras" and "keras_predictions" in prediction_result:
+                    prediction = prediction_result["keras_predictions"][0]
+                    probability = prediction_result.get("keras_probabilities", [None])[0]
+                    model_used = "keras_mlp"
+                elif model_name == "ensemble" and "ensemble_predictions" in prediction_result:
+                    prediction = prediction_result["ensemble_predictions"][0]
+                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                    model_used = "ensemble"
+                # If no specific model requested or requested model not available, use best available
+                elif "ensemble_predictions" in prediction_result:
+                    prediction = prediction_result["ensemble_predictions"][0]
+                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                    model_used = "ensemble"
+                elif "sklearn_predictions" in prediction_result:
+                    prediction = prediction_result["sklearn_predictions"][0]
+                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                    model_used = "sklearn_mlp"
+                elif "keras_predictions" in prediction_result:
+                    prediction = prediction_result["keras_predictions"][0]
+                    probability = prediction_result.get("keras_probabilities", [None])[0]
+                    model_used = "keras_mlp"
 
             # Handle case where no predictions are available
             if prediction is None or model_used is None:
@@ -390,9 +415,13 @@ async def predict(patient_data: PatientData, model: str = None):
             else patient_data.dict()
         )
 
-        # Make prediction
+        # Make prediction with caching enabled
         prediction_result = model_predictor.predict(
-            patient_dict, return_probabilities=True, return_interpretation=True
+            patient_dict,
+            return_probabilities=True,
+            return_interpretation=True,
+            model=model,
+            use_cache=True,
         )
 
         # Check for error in prediction result
@@ -400,40 +429,30 @@ async def predict(patient_data: PatientData, model: str = None):
             logger.error(f"Prediction error: {prediction_result['error']}")
             raise HTTPException(status_code=500, detail=prediction_result["error"])
 
-        # Select model based on parameter if provided
-        model_used = None
+        # Use the model_used field directly from the result
+        if "model_used" not in prediction_result:
+            logger.error("No model_used field in prediction result")
+            raise HTTPException(status_code=500, detail="Invalid prediction result format")
+
+        # Get the model that was used for the prediction
+        model_used = prediction_result["model_used"]
+
+        # Get prediction and probability from the appropriate field
         prediction = None
         probability = None
 
-        # Try the specifically requested model first
-        if model == "sklearn" and "sklearn_predictions" in prediction_result:
+        if model_used == "sklearn_mlp" and "sklearn_predictions" in prediction_result:
             prediction = prediction_result["sklearn_predictions"][0]
             probability = prediction_result.get("sklearn_probabilities", [None])[0]
-            model_used = "sklearn_mlp"
-        elif model == "keras" and "keras_predictions" in prediction_result:
+        elif model_used == "keras_mlp" and "keras_predictions" in prediction_result:
             prediction = prediction_result["keras_predictions"][0]
             probability = prediction_result.get("keras_probabilities", [None])[0]
-            model_used = "keras_mlp"
-        elif model == "ensemble" and "ensemble_predictions" in prediction_result:
+        elif model_used == "ensemble" and "ensemble_predictions" in prediction_result:
             prediction = prediction_result["ensemble_predictions"][0]
             probability = prediction_result.get("ensemble_probabilities", [None])[0]
-            model_used = "ensemble"
-        # If no specific model requested or requested model not available, use best available
-        elif "ensemble_predictions" in prediction_result:
-            prediction = prediction_result["ensemble_predictions"][0]
-            probability = prediction_result.get("ensemble_probabilities", [None])[0]
-            model_used = "ensemble"
-        elif "sklearn_predictions" in prediction_result:
-            prediction = prediction_result["sklearn_predictions"][0]
-            probability = prediction_result.get("sklearn_probabilities", [None])[0]
-            model_used = "sklearn_mlp"
-        elif "keras_predictions" in prediction_result:
-            prediction = prediction_result["keras_predictions"][0]
-            probability = prediction_result.get("keras_probabilities", [None])[0]
-            model_used = "keras_mlp"
 
         # Handle case where no predictions are available
-        if prediction is None or model_used is None:
+        if prediction is None:
             logger.error("No valid predictions found in model output")
             raise HTTPException(status_code=500, detail="No predictions available from any model")
 
@@ -574,6 +593,18 @@ class BatchConfig(BaseModel):
     )
 
 
+class CacheConfig(BaseModel):
+    """Configuration for prediction caching."""
+
+    enabled: Optional[bool] = Field(None, description="Whether prediction caching is enabled")
+    max_size: Optional[int] = Field(
+        None, description="Maximum number of cached entries", ge=1, le=10000
+    )
+    ttl: Optional[int] = Field(
+        None, description="Time-to-live in seconds for cache entries", ge=1, le=86400
+    )
+
+
 @app.get("/batch/config")
 async def get_batch_config():
     """
@@ -625,15 +656,113 @@ async def update_batch_config(config: BatchConfig):
             f"max_workers={MAX_WORKERS}, performance_logging={PERFORMANCE_LOGGING}"
         )
 
+        # Add cache configuration to the response
+        cache_stats = model_predictor.get_cache_stats()
+
         return {
             "batch_size": BATCH_SIZE,
             "max_workers": MAX_WORKERS,
             "performance_logging": PERFORMANCE_LOGGING,
+            "cache_config": {
+                "enabled": cache_stats["enabled"],
+                "max_size": cache_stats["max_size"],
+                "ttl_seconds": cache_stats["ttl_seconds"],
+            },
         }
 
     except Exception as e:
         logger.error(f"Error updating batch configuration: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating batch configuration: {str(e)}")
+
+
+@app.get("/cache/stats")
+async def get_cache_stats():
+    """
+    Get prediction cache statistics.
+
+    Returns:
+        Detailed statistics about the prediction cache
+    """
+    logger.info("Received cache statistics request")
+
+    try:
+        # Get cache statistics from the model predictor
+        stats = model_predictor.get_cache_stats()
+        return stats
+    except Exception as e:
+        logger.error(f"Error getting cache statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting cache statistics: {str(e)}")
+
+
+@app.post("/cache/config")
+async def update_cache_config(config: CacheConfig):
+    """
+    Update prediction cache configuration.
+
+    Args:
+        config: New cache configuration parameters
+
+    Returns:
+        Updated cache configuration
+    """
+    logger.info(f"Received cache configuration update request: {config}")
+
+    try:
+        global CACHE_ENABLED, CACHE_MAX_SIZE, CACHE_TTL
+
+        # Update the configuration in the global variables
+        if config.enabled is not None:
+            CACHE_ENABLED = config.enabled
+
+        if config.max_size is not None:
+            CACHE_MAX_SIZE = config.max_size
+
+        if config.ttl is not None:
+            CACHE_TTL = config.ttl
+
+        # Update the model predictor's cache configuration
+        # Create a new cache with updated parameters
+        from src.models.predict_model import PredictionCache
+
+        model_predictor.cache = PredictionCache(max_size=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+
+        # Get updated cache statistics
+        stats = model_predictor.get_cache_stats()
+
+        logger.info(
+            f"Cache configuration updated: enabled={CACHE_ENABLED}, "
+            f"max_size={CACHE_MAX_SIZE}, ttl={CACHE_TTL}"
+        )
+
+        return {
+            "enabled": stats["enabled"],
+            "max_size": stats["max_size"],
+            "ttl_seconds": stats["ttl_seconds"],
+            "entries": stats["entries"],
+            "hit_rate": stats["hit_rate"],
+        }
+    except Exception as e:
+        logger.error(f"Error updating cache configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating cache configuration: {str(e)}")
+
+
+@app.post("/cache/clear")
+async def clear_cache():
+    """
+    Clear the prediction cache.
+
+    Returns:
+        Status message indicating success
+    """
+    logger.info("Received cache clear request")
+
+    try:
+        # Clear the cache
+        result = model_predictor.clear_cache()
+        return result
+    except Exception as e:
+        logger.error(f"Error clearing cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error clearing cache: {str(e)}")
 
 
 if __name__ == "__main__":

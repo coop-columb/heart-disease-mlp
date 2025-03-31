@@ -10,6 +10,8 @@ This document provides detailed information about the Heart Disease Prediction R
 - [Endpoints](#endpoints)
   - [Health Check](#health-check)
   - [Model Information](#model-information)
+  - [Batch Configuration](#batch-configuration)
+  - [Cache Management](#cache-management)
   - [Prediction](#prediction)
 - [Request and Response Formats](#request-and-response-formats)
 - [Error Handling](#error-handling)
@@ -154,7 +156,73 @@ The API provides the following endpoints:
 {
   "batch_size": 100,
   "max_workers": 8,
-  "performance_logging": true
+  "performance_logging": true,
+  "cache_config": {
+    "enabled": true,
+    "max_size": 1000,
+    "ttl_seconds": 3600
+  }
+}
+```
+
+### Cache Management
+
+- **URL**: `/cache/stats`
+- **Method**: `GET`
+- **Description**: Gets current prediction cache statistics.
+- **Response**: Detailed statistics about the prediction cache.
+
+**Example Response**:
+```json
+{
+  "enabled": true,
+  "max_size": 1000,
+  "ttl_seconds": 3600,
+  "entries": 45,
+  "hits": 127,
+  "misses": 62,
+  "hit_rate": 0.672,
+  "evictions": 0,
+  "created_at": "2025-03-31T14:30:00.123456"
+}
+```
+
+- **URL**: `/cache/config`
+- **Method**: `POST`
+- **Description**: Updates the prediction cache configuration.
+- **Request**: JSON object containing cache configuration parameters to update.
+- **Response**: Updated configuration and statistics for the prediction cache.
+
+**Example Request**:
+```json
+{
+  "enabled": true,
+  "max_size": 2000,
+  "ttl": 7200
+}
+```
+
+**Example Response**:
+```json
+{
+  "enabled": true,
+  "max_size": 2000,
+  "ttl_seconds": 7200,
+  "entries": 45,
+  "hit_rate": 0.672
+}
+```
+
+- **URL**: `/cache/clear`
+- **Method**: `POST`
+- **Description**: Clears the prediction cache.
+- **Response**: Status message indicating success.
+
+**Example Response**:
+```json
+{
+  "status": "success",
+  "message": "Cache cleared successfully"
 }
 ```
 
@@ -358,6 +426,21 @@ curl -X POST http://localhost:8000/batch/config \
     "max_workers": 8,
     "performance_logging": true
   }'
+
+# Get cache statistics
+curl -X GET http://localhost:8000/cache/stats
+
+# Update cache configuration
+curl -X POST http://localhost:8000/cache/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "max_size": 2000,
+    "ttl": 7200
+  }'
+
+# Clear cache
+curl -X POST http://localhost:8000/cache/clear
 
 # Make a prediction
 curl -X POST http://localhost:8000/predict \
