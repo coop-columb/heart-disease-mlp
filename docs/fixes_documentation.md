@@ -38,7 +38,7 @@ This document provides an overview of the fixes and improvements made to the Hea
    - Enhanced overall robustness with defensive coding patterns
    - Fixed typo in utils.py docstring ("environmen" -> "environment")
    - Removed unused imports in src/models/mlp_model.py (sys, Optional, Union)
-   - Removed unused import in api/app.py (asyncio)
+   - Fixed asyncio import in api/app.py (initially removed but needed for batch processing)
    - Added missing time module import in Jupyter notebook
 
 6. **CI/CD Pipeline Improvements**
@@ -173,6 +173,9 @@ This document provides an overview of the fixes and improvements made to the Hea
    - ✅ Fix linting issues in various files (Fixed)
    - ✅ Replace print statements with proper logging (Fixed)
    - ✅ Fix whitespace and line length issues (Fixed)
+   - ✅ Fix asyncio import required for batch processing (Fixed)
+   - ✅ Fix notebook time import and tabulate dependencies (Fixed)
+   - ✅ Fix black formatting in test files (Fixed)
 
 3. **Performance Optimizations**
    - ✅ Optimize batch prediction with chunking and parallelization (Fixed)

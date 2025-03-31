@@ -59,9 +59,9 @@ def test_model_accuracy_vs_baseline(test_data, predictor):
                     "accuracy": accuracy_score(y_test, y_pred_sklearn),
                     "precision": precision_score(y_test, y_pred_sklearn, zero_division=0),
                     "recall": recall_score(y_test, y_pred_sklearn, zero_division=0),
-                    "roc_auc": roc_auc_score(y_test, y_proba_sklearn)
-                    if len(set(y_test)) > 1
-                    else 0.5,
+                    "roc_auc": (
+                        roc_auc_score(y_test, y_proba_sklearn) if len(set(y_test)) > 1 else 0.5
+                    ),
                 }
 
                 # Test that sklearn model beats baseline
