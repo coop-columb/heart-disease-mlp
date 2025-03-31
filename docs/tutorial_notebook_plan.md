@@ -41,7 +41,7 @@ A new comprehensive tutorial notebook has been created (`heart_disease_predictio
 
 ### 1. Structural Integrity
 - Complete valid notebook structure with proper metadata
-- Adherence to Jupyter notebook format specification 
+- Adherence to Jupyter notebook format specification
 - Compatible with nbconvert and other standard tools
 - Successfully executes end-to-end
 

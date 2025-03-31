@@ -222,7 +222,7 @@ heart-disease-mlp/
 
    # Verify tutorial notebook dependencies
    jupyter nbconvert --to html --execute notebooks/test_notebook.ipynb
-   
+
    # Run the full tutorial notebook
    jupyter nbconvert --to html --execute notebooks/heart_disease_prediction_tutorial_working.ipynb
    ```
