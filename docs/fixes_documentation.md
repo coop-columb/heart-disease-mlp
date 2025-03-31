@@ -133,7 +133,14 @@ This document provides an overview of the fixes and improvements made to the Hea
    - API usage examples with authentication
    - Batch processing and caching capabilities
    - Fixed missing time module import required for caching demonstrations
-2. `/requirements.txt` and `/requirements-flexible.txt` - Added tabulate dependency for notebook tables
+
+2. `/notebooks/test_notebook.ipynb` - Created simplified test notebook that:
+   - Verifies the time module works correctly for performance measurements
+   - Confirms tabulate dependency is available and properly installed
+   - Provides a minimal example notebook with proper structure
+   - Includes synthetic dataset generation for testing
+
+3. `/requirements.txt` and `/requirements-flexible.txt` - Added tabulate dependency for notebook tables
 
 ## Testing Approach
 
