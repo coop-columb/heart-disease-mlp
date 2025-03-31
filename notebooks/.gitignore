@@ -1,0 +1,8 @@
+# Ignore HTML rendered notebooks
+*.html
+
+# Ignore backup files
+*.bak
+
+# Ignore temporary files
+.ipynb_checkpoints/
