@@ -7,6 +7,7 @@ import logging
 import os
 
 import joblib
+import numpy as np
 import pandas as pd
 from tensorflow import keras
 
@@ -153,7 +154,9 @@ class HeartDiseasePredictor:
             # Make predictions with Keras model
             if self.keras_model is not None:
                 try:
-                    keras_probas = self.keras_model.predict(X).ravel()
+                    # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
+                    keras_pred_raw = self.keras_model.predict(X)
+                    keras_probas = np.reshape(keras_pred_raw, -1)  # Safer than ravel()
                     keras_preds = (keras_probas >= 0.5).astype(int)
                     results["keras_predictions"] = keras_preds
                     if return_probabilities:
