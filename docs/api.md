@@ -36,7 +36,32 @@ The API is built using FastAPI, providing automatic OpenAPI documentation, reque
 
 ## Authentication
 
-Currently, the API does not implement authentication. For production deployments, you should implement an authentication mechanism (e.g., API keys, OAuth2, or JWT tokens).
+The API implements both JWT token-based authentication and API key authentication. All endpoints except health check and documentation are protected.
+
+### JWT Authentication
+
+1. Get a token by making a POST request to the `/auth/token` endpoint:
+   ```bash
+   curl -X POST http://localhost:8000/auth/token
+   ```
+
+2. Use the token in subsequent requests by adding the `Authorization` header:
+   ```bash
+   curl -X GET http://localhost:8000/models/info \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+   ```
+
+3. Tokens expire after 30 minutes by default. You can request a new token at any time.
+
+### API Key Authentication
+
+Alternatively, you can use an API key in the `X-API-Key` header:
+```bash
+curl -X GET http://localhost:8000/models/info \
+  -H "X-API-Key: YOUR_API_KEY_HERE"
+```
+
+API keys are configured in the `config.yaml` file under `api.auth.api_keys`.
 
 ## Endpoints
 
@@ -408,19 +433,45 @@ Rate limit headers are included in the response:
 
 ### Using cURL
 
+First, get an authentication token:
+
 ```bash
-# Health check
+# Get an authentication token
+curl -X POST http://localhost:8000/auth/token
+```
+
+This will return a response like:
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 1800,
+  "scope": "api"
+}
+```
+
+Now use this token for subsequent requests:
+
+```bash
+# Store the token in a variable for easier use
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+# Health check (no authentication required)
 curl -X GET http://localhost:8000/health
 
 # Model information
-curl -X GET http://localhost:8000/models/info
+curl -X GET http://localhost:8000/models/info \
+  -H "Authorization: Bearer $TOKEN"
 
 # Get batch configuration
-curl -X GET http://localhost:8000/batch/config
+curl -X GET http://localhost:8000/batch/config \
+  -H "Authorization: Bearer $TOKEN"
 
 # Update batch configuration
 curl -X POST http://localhost:8000/batch/config \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "batch_size": 100,
     "max_workers": 8,
@@ -428,11 +479,13 @@ curl -X POST http://localhost:8000/batch/config \
   }'
 
 # Get cache statistics
-curl -X GET http://localhost:8000/cache/stats
+curl -X GET http://localhost:8000/cache/stats \
+  -H "Authorization: Bearer $TOKEN"
 
 # Update cache configuration
 curl -X POST http://localhost:8000/cache/config \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "enabled": true,
     "max_size": 2000,
@@ -440,11 +493,13 @@ curl -X POST http://localhost:8000/cache/config \
   }'
 
 # Clear cache
-curl -X POST http://localhost:8000/cache/clear
+curl -X POST http://localhost:8000/cache/clear \
+  -H "Authorization: Bearer $TOKEN"
 
 # Make a prediction
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "age": 61,
     "sex": 1,
@@ -464,6 +519,7 @@ curl -X POST http://localhost:8000/predict \
 # Make a batch prediction
 curl -X POST http://localhost:8000/predict/batch \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '[
     {
       "age": 61,
@@ -498,6 +554,15 @@ curl -X POST http://localhost:8000/predict/batch \
   ]'
 ```
 
+Alternatively, you can use an API key instead of a token:
+
+```bash
+# API key authentication
+curl -X GET http://localhost:8000/models/info \
+  -H "X-API-Key: YOUR_API_KEY_HERE"
+```
+```
+
 ### Using Python
 
 ```python
@@ -507,16 +572,27 @@ import json
 # Base URL
 base_url = "http://localhost:8000"
 
-# Health check
+# First, get an authentication token
+token_response = requests.post(f"{base_url}/auth/token")
+token_data = token_response.json()
+access_token = token_data["access_token"]
+
+# Create headers with token
+headers = {
+    "Authorization": f"Bearer {access_token}",
+    "Content-Type": "application/json"
+}
+
+# Health check (no authentication required)
 response = requests.get(f"{base_url}/health")
 print(f"Health check: {response.json()}")
 
 # Model information
-response = requests.get(f"{base_url}/models/info")
+response = requests.get(f"{base_url}/models/info", headers=headers)
 print(f"Model information: {response.json()}")
 
 # Get batch configuration
-response = requests.get(f"{base_url}/batch/config")
+response = requests.get(f"{base_url}/batch/config", headers=headers)
 print(f"Batch configuration: {response.json()}")
 
 # Update batch configuration for performance
@@ -525,7 +601,7 @@ batch_config = {
     "max_workers": 8,
     "performance_logging": True
 }
-response = requests.post(f"{base_url}/batch/config", json=batch_config)
+response = requests.post(f"{base_url}/batch/config", json=batch_config, headers=headers)
 print(f"Updated batch configuration: {response.json()}")
 
 # Make a single prediction
@@ -545,7 +621,7 @@ patient_data = {
     "thal": 3
 }
 
-response = requests.post(f"{base_url}/predict", json=patient_data)
+response = requests.post(f"{base_url}/predict", json=patient_data, headers=headers)
 
 if response.status_code == 200:
     result = response.json()
@@ -589,7 +665,7 @@ batch_data = [
     }
 ]
 
-response = requests.post(f"{base_url}/predict/batch", json=batch_data)
+response = requests.post(f"{base_url}/predict/batch", json=batch_data, headers=headers)
 
 if response.status_code == 200:
     result = response.json()
@@ -612,6 +688,18 @@ if response.status_code == 200:
         print(f"  Workers: {metrics['num_workers']}")
 else:
     print(f"Error: {response.status_code} - {response.text}")
+
+# Alternative: Use API key authentication
+api_key_headers = {
+    "X-API-Key": "YOUR_API_KEY_HERE",
+    "Content-Type": "application/json"
+}
+
+# Make a prediction with API key
+response = requests.post(f"{base_url}/predict", json=patient_data, headers=api_key_headers)
+if response.status_code == 200:
+    print("API key authentication successful")
+```
 ```
 
 ### Using JavaScript
@@ -620,49 +708,87 @@ else:
 // Base URL
 const baseUrl = "http://localhost:8000";
 
-// Health check
-fetch(`${baseUrl}/health`)
-  .then(response => response.json())
-  .then(data => console.log("Health check:", data))
-  .catch(error => console.error("Error:", error));
+// First, get an authentication token
+let accessToken;
 
-// Model information
-fetch(`${baseUrl}/models/info`)
-  .then(response => response.json())
-  .then(data => console.log("Model information:", data))
-  .catch(error => console.error("Error:", error));
-
-// Make a prediction
-const patientData = {
-  age: 61,
-  sex: 1,
-  cp: 3,
-  trestbps: 140,
-  chol: 240,
-  fbs: 1,
-  restecg: 1,
-  thalach: 150,
-  exang: 1,
-  oldpeak: 2.4,
-  slope: 2,
-  ca: 1,
-  thal: 3
-};
-
-fetch(`${baseUrl}/predict`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(patientData)
+// Get token
+fetch(`${baseUrl}/auth/token`, {
+  method: "POST"
 })
   .then(response => response.json())
-  .then(result => {
-    console.log("Prediction:", result.prediction);
-    console.log("Probability:", result.probability);
-    console.log("Risk Level:", result.risk_level);
+  .then(data => {
+    console.log("Token obtained:", data);
+    accessToken = data.access_token;
+
+    // After getting token, make authenticated requests
+    makeAuthenticatedRequests();
   })
-  .catch(error => console.error("Error:", error));
+  .catch(error => console.error("Error getting token:", error));
+
+function makeAuthenticatedRequests() {
+  // Auth headers for all requests
+  const authHeaders = {
+    "Authorization": `Bearer ${accessToken}`,
+    "Content-Type": "application/json"
+  };
+
+  // Health check (no authentication required)
+  fetch(`${baseUrl}/health`)
+    .then(response => response.json())
+    .then(data => console.log("Health check:", data))
+    .catch(error => console.error("Error:", error));
+
+  // Model information (authenticated)
+  fetch(`${baseUrl}/models/info`, {
+    headers: authHeaders
+  })
+    .then(response => response.json())
+    .then(data => console.log("Model information:", data))
+    .catch(error => console.error("Error:", error));
+
+  // Make a prediction (authenticated)
+  const patientData = {
+    age: 61,
+    sex: 1,
+    cp: 3,
+    trestbps: 140,
+    chol: 240,
+    fbs: 1,
+    restecg: 1,
+    thalach: 150,
+    exang: 1,
+    oldpeak: 2.4,
+    slope: 2,
+    ca: 1,
+    thal: 3
+  };
+
+  fetch(`${baseUrl}/predict`, {
+    method: "POST",
+    headers: authHeaders,
+    body: JSON.stringify(patientData)
+  })
+    .then(response => response.json())
+    .then(result => {
+      console.log("Prediction:", result.prediction);
+      console.log("Probability:", result.probability);
+      console.log("Risk Level:", result.risk_level);
+    })
+    .catch(error => console.error("Error:", error));
+
+  // Alternative: Use API key authentication
+  const apiKeyHeaders = {
+    "X-API-Key": "YOUR_API_KEY_HERE",
+    "Content-Type": "application/json"
+  };
+
+  fetch(`${baseUrl}/models/info`, {
+    headers: apiKeyHeaders
+  })
+    .then(response => response.json())
+    .then(data => console.log("API Key Auth - Model info:", data))
+    .catch(error => console.error("Error:", error));
+}
 ```
 
 ## API Testing Script

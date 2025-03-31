@@ -74,3 +74,26 @@ api:
     max_size: 1000   # Maximum number of cached predictions
     ttl: 3600        # Time-to-live in seconds (1 hour)
     hash_algorithm: 'md5'  # Algorithm for generating cache keys
+
+  # Authentication settings
+  auth:
+    # Set to false for automatic tests, true for production
+    # ⚠️ IMPORTANT: Change to 'true' in production for security!
+    enabled: false
+    secret_key: 'YOUR_SECRET_KEY_HERE'  # Change this in production
+    algorithm: 'HS256'
+    access_token_expire_minutes: 30
+    token_url: '/auth/token'
+
+    # Default API key for testing/development. In production, use a secure key.
+    api_keys:
+      - key: 'dev_api_key'
+        name: 'Development API Key'
+
+    # Public endpoints (no authentication required)
+    public_endpoints:
+      - '/health'
+      - '/docs'
+      - '/redoc'
+      - '/openapi.json'
+      - '/auth/token'

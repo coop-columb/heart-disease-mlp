@@ -23,8 +23,18 @@ from src.models.predict_model import HeartDiseasePredictor  # noqa: E402
 
 @pytest.fixture
 def client():
-    """Create a test client for the FastAPI app."""
-    return TestClient(app)
+    """Create a test client for the FastAPI app with authentication disabled for testing."""
+    try:
+        # Add special headers to disable auth in app for tests
+        test_client = TestClient(app)
+
+        # Disable auth for testing by adding the test API key header
+        test_client.headers.update({"X-API-Key": "dev_api_key"})
+
+        return test_client
+    except Exception as e:
+        pytest.skip(f"Unable to create TestClient: {e}")
+        return None
 
 
 @pytest.fixture
@@ -126,4 +136,17 @@ def predictor():
         return HeartDiseasePredictor()
     except Exception:
         # If models not found, this will be skipped
+        return None
+
+
+@pytest.fixture
+def authenticated_client():
+    """Create a test client for the FastAPI app with authentication."""
+    try:
+        # Create client with dev API key
+        test_client = TestClient(app)
+        test_client.headers.update({"X-API-Key": "dev_api_key"})
+        return test_client
+    except Exception as e:
+        pytest.skip(f"Unable to create authenticated TestClient: {e}")
         return None

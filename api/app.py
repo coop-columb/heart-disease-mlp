@@ -42,13 +42,15 @@ for p in sys.path:
 
 try:
     # Import FastAPI after path setup
-    from fastapi import FastAPI, HTTPException
+    from fastapi import Depends, FastAPI, HTTPException, Request, status
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
+    from fastapi.security import APIKeyHeader, OAuth2PasswordBearer, OAuth2PasswordRequestForm
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel, Field
 
     # Import project modules
+    from api.auth import AuthHandler, AuthSettings, Token
     from src.models.predict_model import HeartDiseasePredictor
     from src.utils import load_config
 
@@ -77,6 +79,10 @@ model_predictor = HeartDiseasePredictor(model_dir="models")
 
 # Initialize thread pool for parallel processing
 thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+# Initialize authentication
+auth_settings = AuthSettings(config)
+auth_handler = AuthHandler(auth_settings)
 
 # Create FastAPI app
 app = FastAPI(
@@ -379,7 +385,54 @@ class BatchPredictionResponse(BaseModel):
     )
 
 
+# Setup OAuth2 scheme
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
+api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+# Authentication dependency
+async def verify_authentication(
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    api_key: Optional[str] = Depends(api_key_scheme),
+):
+    """Verify authentication for protected endpoints."""
+    if not auth_settings.enabled:
+        # Authentication is disabled, allow all requests
+        return True
+
+    # Check if endpoint is public
+    path = request.url.path
+    if path in auth_settings.public_endpoints:
+        return True
+
+    # Try API key authentication first
+    if api_key and await auth_handler.verify_api_key(api_key):
+        return True
+
+    # Then try JWT token authentication
+    if token and await auth_handler.verify_token(token):
+        return True
+
+    # Authentication failed
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
 # Define API endpoints
+@app.post("/auth/token", response_model=Token)
+async def get_access_token():
+    """
+    Get an access token for API authentication.
+
+    This endpoint issues new JWT tokens that can be used to authenticate API requests.
+    """
+    return auth_handler.create_access_token()
+
+
 @app.get("/")
 async def root():
     """Root endpoint - serves the frontend UI."""
@@ -393,7 +446,11 @@ async def health_check():
 
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict(patient_data: PatientData, model: str = None):
+async def predict(
+    patient_data: PatientData,
+    model: str = None,
+    authenticated: bool = Depends(verify_authentication),
+):
     """
     Predict heart disease risk from patient data.
 
@@ -501,7 +558,11 @@ async def predict(patient_data: PatientData, model: str = None):
 
 
 @app.post("/predict/batch", response_model=BatchPredictionResponse)
-async def predict_batch(patients_data: List[PatientData], model: str = None):
+async def predict_batch(
+    patients_data: List[PatientData],
+    model: str = None,
+    authenticated: bool = Depends(verify_authentication),
+):
     """
     Predict heart disease risk for multiple patients using optimized batch processing.
 
@@ -546,7 +607,7 @@ async def predict_batch(patients_data: List[PatientData], model: str = None):
 
 
 @app.get("/models/info")
-async def get_model_info():
+async def get_model_info(authenticated: bool = Depends(verify_authentication)):
     """
     Get information about the loaded models.
 
@@ -606,7 +667,7 @@ class CacheConfig(BaseModel):
 
 
 @app.get("/batch/config")
-async def get_batch_config():
+async def get_batch_config(authenticated: bool = Depends(verify_authentication)):
     """
     Get current batch processing configuration.
 
@@ -623,7 +684,9 @@ async def get_batch_config():
 
 
 @app.post("/batch/config")
-async def update_batch_config(config: BatchConfig):
+async def update_batch_config(
+    config: BatchConfig, authenticated: bool = Depends(verify_authentication)
+):
     """
     Update batch processing configuration.
 
@@ -676,7 +739,7 @@ async def update_batch_config(config: BatchConfig):
 
 
 @app.get("/cache/stats")
-async def get_cache_stats():
+async def get_cache_stats(authenticated: bool = Depends(verify_authentication)):
     """
     Get prediction cache statistics.
 
@@ -695,7 +758,9 @@ async def get_cache_stats():
 
 
 @app.post("/cache/config")
-async def update_cache_config(config: CacheConfig):
+async def update_cache_config(
+    config: CacheConfig, authenticated: bool = Depends(verify_authentication)
+):
     """
     Update prediction cache configuration.
 
@@ -747,7 +812,7 @@ async def update_cache_config(config: CacheConfig):
 
 
 @app.post("/cache/clear")
-async def clear_cache():
+async def clear_cache(authenticated: bool = Depends(verify_authentication)):
     """
     Clear the prediction cache.
 
