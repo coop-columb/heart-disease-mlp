@@ -46,11 +46,19 @@ This document provides an overview of the fixes and improvements made to the Hea
    - Made security scanning workflow more robust with improved error handling
    - The workflow now passes with known security issues flagged but not failing the pipeline
 
+7. **Batch Processing Optimization**
+   - Implemented chunking mechanism for processing large batches in smaller pieces
+   - Added parallel processing with ThreadPoolExecutor for improved throughput
+   - Created configurable batch parameters (batch_size, max_workers)
+   - Added performance metrics to track batch processing efficiency
+   - Implemented API endpoints for viewing and updating batch configuration
+   - Documented batch optimization features and usage patterns
+
 ## Key Files Modified
 
 1. `/run_api.py` - Created robust API launcher with explicit path isolation
 2. `/scripts/run_api.sh` - Added shell script for easy API launching with environment setup
-3. `/api/app.py` - Enhanced with robust error handling in prediction endpoints
+3. `/api/app.py` - Enhanced with robust error handling in prediction endpoints, added batch optimization
 4. `/src/models/predict_model.py` - Added comprehensive error handling in prediction logic
 5. `/src/models/mlp_model.py` - Fixed interpret_prediction() with proper null handling
 6. `/src/data/preprocess.py` - Fixed pandas FutureWarning about chained assignment
@@ -59,6 +67,10 @@ This document provides an overview of the fixes and improvements made to the Hea
 9. `/.github/workflows/security-scan.yml` - Improved security scanning with latest action versions
 10. `/tests/test_api.py` - Updated test_root_endpoint to check for HTML instead of JSON
 11. `/api/static/index.html` - Added web UI for interactive demonstration
+12. `/config/config.yaml` - Added batch processing configuration parameters
+13. `/docs/api.md` - Updated API documentation with batch optimization details
+14. `/docs/api_usage_examples.md` - Added batch configuration examples
+15. `/docs/usage.md` - Added batch processing usage guidance
 
 ## Testing Approach
 
