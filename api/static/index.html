@@ -185,11 +185,11 @@
     <script>
         document.getElementById('predictionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Get form data
             const formData = new FormData(e.target);
             const data = {};
-            
+
             for (let [key, value] of formData.entries()) {
                 if (key === 'model') continue; // Handle separately
                 if (key === 'oldpeak') {
@@ -198,16 +198,16 @@
                     data[key] = parseInt(value);
                 }
             }
-            
+
             // Get selected model
             const model = document.getElementById('model').value;
             const url = model ? `/predict?model=${model}` : '/predict';
-            
+
             try {
                 // Show loading state
                 document.getElementById('result').innerHTML = 'Loading prediction...';
                 document.getElementById('result').style.display = 'block';
-                
+
                 // Send request to API
                 const response = await fetch(url, {
                     method: 'POST',
@@ -216,19 +216,19 @@
                     },
                     body: JSON.stringify(data)
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || 'Error making prediction');
                 }
-                
+
                 const result = await response.json();
-                
+
                 // Format the result
                 let riskClass = 'risk-moderate';
                 if (result.risk_level === 'HIGH') riskClass = 'risk-high';
                 if (result.risk_level === 'LOW') riskClass = 'risk-low';
-                
+
                 // Display the result
                 document.getElementById('result').innerHTML = `
                     <h3>Prediction Result</h3>
@@ -240,7 +240,7 @@
                     <p>${result.interpretation ? result.interpretation.replace(/\n/g, '<br>') : 'No interpretation available'}</p>
                 `;
                 document.getElementById('result').style.display = 'block';
-                
+
             } catch (error) {
                 document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
                 document.getElementById('result').style.display = 'block';

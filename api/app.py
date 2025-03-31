@@ -40,8 +40,8 @@ try:
     # Import FastAPI after path setup
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.staticfiles import StaticFiles
     from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel, Field
 
     # Import project modules
