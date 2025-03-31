@@ -44,6 +44,8 @@ models/optuna/*.pkl
 
 # Logs
 logs/*.log
+*.log
+api.log
 
 # IDE specific files
 .idea/
