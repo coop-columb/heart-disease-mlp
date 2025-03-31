@@ -49,7 +49,7 @@ def resolve_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
     Resolve environment variables in configuration values.
 
     This function recursively traverses the configuration dictionary and
-    replaces ${ENV_VAR} patterns with their corresponding environmen
+    replaces ${ENV_VAR} patterns with their corresponding environment
     variable values.
 
     Args:

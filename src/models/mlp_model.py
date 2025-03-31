@@ -4,8 +4,7 @@ MLP model implementations for the Heart Disease Prediction project.
 
 import logging
 import os
-import sys  # noqa: F401
-from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
+from typing import Any, Dict, List, Tuple
 
 # Standard libraries for data processing and visualization
 import matplotlib.pyplot as plt

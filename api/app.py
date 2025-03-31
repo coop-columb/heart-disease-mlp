@@ -3,8 +3,6 @@ FastAPI application for heart disease prediction API.
 This module provides REST API endpoints for predicting heart disease risk.
 """
 
-import asyncio
-
 # flake8: noqa: F401, E501
 import logging
 import os
