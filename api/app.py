@@ -40,6 +40,8 @@ try:
     # Import FastAPI after path setup
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
     from pydantic import BaseModel, Field
 
     # Import project modules
@@ -74,6 +76,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# Check if static directory exists, create if not
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_dir, exist_ok=True)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 
 # Define request models
 class PatientData(BaseModel):
@@ -104,7 +113,7 @@ class PatientData(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "age": 61,
                 "sex": 1,
@@ -149,8 +158,8 @@ class BatchPredictionResponse(BaseModel):
 # Define API endpoints
 @app.get("/")
 async def root():
-    """Root endpoint."""
-    return {"message": "Heart Disease Prediction API. Use /docs for documentation."}
+    """Root endpoint - serves the frontend UI."""
+    return FileResponse(os.path.join(static_dir, "index.html"))
 
 
 @app.get("/health")

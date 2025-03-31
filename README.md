@@ -402,9 +402,12 @@ For more details, see the [workflows documentation](.github/workflows/README.md)
 ## Documentation Index
 
 - [API Documentation](docs/api.md) - REST API endpoints and usage
+- [API Usage Examples](docs/api_usage_examples.md) - Detailed examples of API usage with various languages
 - [Data Dictionary](docs/data_dictionary.md) - Description of data fields
 - [Model Details](docs/model.md) - Model architecture and training process
 - [Usage Guide](docs/usage.md) - Detailed usage instructions
+- [Fixes Documentation](docs/fixes_documentation.md) - Documentation of system fixes and improvements
+- [Project Documentation](PROJECT_DOCUMENTATION.md) - Comprehensive project overview and roadmap
 - [CI/CD Setup](.github/CICD_SETUP.md) - Setting up the CI/CD pipeline
 - [Workflow Documentation](.github/workflows/README.md) - GitHub Actions workflows
 
