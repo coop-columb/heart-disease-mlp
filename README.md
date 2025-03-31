@@ -335,6 +335,29 @@ heart-disease-mlp/
 For cloud deployment, this project uses Docker container images pushed to GitHub Container Registry (ghcr.io).
 Refer to the GitHub Actions workflow configuration and deployment scripts for details on deploying to your chosen environment.
 
+### Backup and Recovery
+
+The system includes a comprehensive backup and recovery solution:
+
+```bash
+# Create a local backup
+./scripts/backup.sh backup
+
+# List available backups
+./scripts/backup.sh list
+
+# Restore from a backup
+./scripts/backup.sh restore
+
+# Prune old backups (keep the 5 most recent)
+./scripts/backup.sh prune --keep=5
+
+# Upload backup to cloud storage (AWS S3, Azure, GCP)
+./scripts/backup.sh backup --cloud --storage=s3
+```
+
+The backup system can be integrated with CI/CD pipelines for scheduled backups. See [Backup Documentation](docs/backup_recovery.md) for more details.
+
 ## CI/CD Pipeline
 
 This project uses GitHub Actions for continuous integration and deployment:
@@ -403,6 +426,7 @@ For more details, see the [workflows documentation](.github/workflows/README.md)
 
 - [API Documentation](docs/api.md) - REST API endpoints and usage
 - [API Usage Examples](docs/api_usage_examples.md) - Detailed examples of API usage with various languages
+- [Backup and Recovery](docs/backup_recovery.md) - Backup procedures and cloud storage integration
 - [Data Dictionary](docs/data_dictionary.md) - Description of data fields
 - [Model Details](docs/model.md) - Model architecture and training process
 - [Usage Guide](docs/usage.md) - Detailed usage instructions
