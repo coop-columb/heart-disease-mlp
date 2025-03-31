@@ -24,6 +24,7 @@ var/
 venv/
 ENV/
 .env
+.env.*
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -55,9 +56,11 @@ api.log
 
 # OS specific files
 .DS_Store
+._.DS_Store
 Thumbs.db
 __pycache__/
 
 # Backup files
 backups/*.tar.gz
+backups/manifest.json
 cloud_credentials.json

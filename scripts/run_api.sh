@@ -32,9 +32,10 @@ if [ -f "requirements.txt" ]; then
     pip install -q -r requirements.txt
 fi
 
-# Set default host and port
+# Set default host, port, and environment
 HOST="0.0.0.0"
 PORT="8000"
+ENV="dev"
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -47,12 +48,17 @@ while [[ $# -gt 0 ]]; do
             PORT="${1#*=}"
             shift
             ;;
+        --env=*)
+            ENV="${1#*=}"
+            shift
+            ;;
         --help)
-            echo "Usage: $0 [--host=HOSTNAME] [--port=PORT]"
+            echo "Usage: $0 [--host=HOSTNAME] [--port=PORT] [--env=ENVIRONMENT]"
             echo
             echo "Options:"
             echo "  --host=HOSTNAME  Set the host address to bind to (default: 0.0.0.0)"
             echo "  --port=PORT      Set the port to listen on (default: 8000)"
+            echo "  --env=ENV        Set the environment: dev, staging, prod (default: dev)"
             echo "  --help           Show this help message"
             exit 0
             ;;
@@ -64,7 +70,23 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate environment
+if [[ "$ENV" != "dev" && "$ENV" != "staging" && "$ENV" != "prod" ]]; then
+    echo "Invalid environment: $ENV"
+    echo "Valid environments are: dev, staging, prod"
+    exit 1
+fi
+
+# Export environment variable
+export ENVIRONMENT="${ENV}"
+
+# Print environment information
+echo "Starting Heart Disease Prediction API with the following settings:"
+echo "  Host: ${HOST}"
+echo "  Port: ${PORT}"
+echo "  Environment: ${ENV}"
+echo "  Config: config/config.${ENV}.yaml"
+echo "  API Documentation: http://localhost:${PORT}/docs"
+
 # Run the API using the run_api.py script
-echo "Starting Heart Disease Prediction API on ${HOST}:${PORT}..."
-echo "API Documentation available at http://localhost:${PORT}/docs"
 python run_api.py --host "${HOST}" --port "${PORT}"

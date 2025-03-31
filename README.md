@@ -74,7 +74,10 @@ heart-disease-mlp/
 ├── api/                    # API implementation
 │   └── app.py              # FastAPI application
 ├── config/                 # Configuration files
-│   └── config.yaml         # Main configuration
+│   ├── config.yaml         # Main configuration
+│   ├── config.dev.yaml     # Development environment configuration
+│   ├── config.staging.yaml # Staging environment configuration
+│   └── config.prod.yaml    # Production environment configuration
 ├── data/                   # Data storage
 │   ├── examples/           # Example input data
 │   ├── external/           # External reference data
@@ -82,8 +85,14 @@ heart-disease-mlp/
 │   └── raw/                # Raw datasets
 ├── docs/                   # Documentation
 │   ├── api.md              # API documentation
+│   ├── api_usage_examples.md # Examples of API usage
+│   ├── backup_recovery.md  # Backup and recovery procedures
+│   ├── cicd_status.md      # CI/CD pipeline status
 │   ├── data_dictionary.md  # Data fields explanation
+│   ├── environment_config.md # Environment configuration
+│   ├── fixes_documentation.md # System improvements and bug fixes
 │   ├── model.md            # Model architecture details
+│   ├── system_architecture.md # System components architecture
 │   └── usage.md            # Detailed usage instructions
 ├── models/                 # Trained models
 │   ├── evaluation_results.joblib  # Performance metrics
@@ -94,23 +103,42 @@ heart-disease-mlp/
 ├── reports/                # Generated reports and visualizations
 │   └── figures/            # Performance visualizations
 ├── scripts/                # Shell scripts for automation
+│   ├── backup_system.py    # Backup and recovery system
 │   ├── deploy_api.sh       # API deployment script
+│   ├── generate_env_file.py # Generate environment-specific .env files
 │   ├── get_data.sh         # Data download script
 │   ├── process_data.sh     # Data processing script
+│   ├── run_api.sh          # Run API locally
+│   ├── run_environment.sh  # Run application in different environments
+│   ├── scheduled_backup.py # Schedule automated backups
 │   ├── test_api.sh         # API testing script
 │   └── train_models.sh     # Model training script
 ├── src/                    # Source code
 │   ├── data/               # Data processing modules
 │   ├── features/           # Feature engineering
 │   ├── models/             # Model implementation
-│   └── visualization/      # Visualization utilities
+│   ├── visualization/      # Visualization utilities
+│   └── utils.py            # Utility functions including environment-specific config
 ├── tests/                  # Automated tests
 │   ├── test_api.py         # API tests
+│   ├── test_api_integration.py # API integration tests
+│   ├── test_auth.py        # Authentication tests
+│   ├── test_backup_recovery.py # Backup system tests
+│   ├── test_cache.py       # Caching tests
 │   ├── test_data.py        # Data processing tests
+│   ├── test_docker.py      # Docker tests
+│   ├── test_error_handling.py # Error handling tests
+│   ├── test_model_performance.py # Model performance tests 
 │   └── test_models.py      # Model tests
+├── backups/                # Backup storage directory
 ├── Dockerfile              # Docker configuration
-├── docker-compose.yml      # Docker Compose configuration
+├── docker-compose.yaml     # Main Docker Compose configuration
+├── docker-compose.dev.yaml # Development Docker Compose configuration
+├── docker-compose.staging.yaml # Staging Docker Compose configuration
+├── docker-compose.prod.yaml # Production Docker Compose configuration
+├── entrypoint.sh           # Docker container entry point script
 ├── requirements.txt        # Python dependencies
+├── run_api.py              # Python script to run API with path isolation
 └── setup.py                # Package installation
 ```
 
@@ -259,11 +287,17 @@ heart-disease-mlp/
 1. **Start the API server:**
 
    ```bash
-   # Start with default settings
-   uvicorn api.app:app --reload
+   # Start in development environment
+   ./scripts/run_environment.sh --env=dev
 
-   # Or use the deployment script
-   ./scripts/deploy_api.sh
+   # Start in staging environment
+   ./scripts/run_environment.sh --env=staging
+
+   # Start in production environment
+   ./scripts/run_environment.sh --env=prod
+
+   # Or run directly with the run_api.py script
+   python run_api.py --env=dev
    ```
 
    The API will be available at http://localhost:8000
@@ -307,28 +341,55 @@ heart-disease-mlp/
 
 ### Docker Deployment
 
-1. **Build and start services using Docker Compose:**
+The system supports environment-specific deployments for development, staging, and production:
+
+1. **Using the run_environment.sh script:**
 
    ```bash
-   # Build and start
-   docker-compose up -d
+   # Start in development environment
+   ./scripts/run_environment.sh --env=dev
 
-   # Stop services
-   docker-compose down
+   # Start in staging environment
+   ./scripts/run_environment.sh --env=staging
+
+   # Start in production environment
+   ./scripts/run_environment.sh --env=prod
    ```
 
-2. **Check logs:**
+2. **Using Docker Compose directly:**
 
    ```bash
-   docker-compose logs -f
+   # Development environment
+   docker-compose -f docker-compose.dev.yaml up -d
+
+   # Staging environment
+   docker-compose -f docker-compose.staging.yaml up -d
+
+   # Production environment
+   docker-compose -f docker-compose.prod.yaml up -d
    ```
 
-3. **Test the containerized API:**
+3. **Check logs:**
+
+   ```bash
+   # Development environment
+   docker-compose -f docker-compose.dev.yaml logs -f
+
+   # Staging environment
+   docker-compose -f docker-compose.staging.yaml logs -f
+
+   # Production environment
+   docker-compose -f docker-compose.prod.yaml logs -f
+   ```
+
+4. **Test the containerized API:**
 
    ```bash
    # Test using provided script
    ./scripts/test_api.sh
    ```
+
+For more details on environment-specific configuration, see [Environment Configuration](docs/environment_config.md).
 
 ### Cloud Deployment
 
@@ -428,6 +489,7 @@ For more details, see the [workflows documentation](.github/workflows/README.md)
 - [API Usage Examples](docs/api_usage_examples.md) - Detailed examples of API usage with various languages
 - [Backup and Recovery](docs/backup_recovery.md) - Backup procedures and cloud storage integration
 - [Data Dictionary](docs/data_dictionary.md) - Description of data fields
+- [Environment Configuration](docs/environment_config.md) - Environment-specific configuration setup
 - [Model Details](docs/model.md) - Model architecture and training process
 - [Usage Guide](docs/usage.md) - Detailed usage instructions
 - [Fixes Documentation](docs/fixes_documentation.md) - Documentation of system fixes and improvements

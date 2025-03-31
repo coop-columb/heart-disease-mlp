@@ -5,15 +5,60 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: heart-disease-prediction-api
+    container_name: heart-disease-prediction-api-${ENVIRONMENT:-dev}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
       - ./models:/app/models
       - ./data:/app/data
       - ./config:/app/config
+      - ./backups:/app/backups
     environment:
+      # Core settings
       - MODEL_DIR=/app/models
-      - LOG_LEVEL=INFO
+      - ENVIRONMENT=${ENVIRONMENT:-dev}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # Authentication settings
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev_secret_key}
+      
+      # Backup settings
+      - BACKUP_FREQUENCY=${BACKUP_FREQUENCY:-daily}
+      - KEEP_BACKUPS=${KEEP_BACKUPS:-5}
+      - CLOUD_BACKUP=${CLOUD_BACKUP:-false}
+      - CLOUD_PROVIDER=${CLOUD_PROVIDER:-s3}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME:-}
+      
+      # Database settings (if applicable)
+      - DB_HOST=${DB_HOST:-localhost}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-heartdisease}
+      - DB_USER=${DB_USER:-user}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
     restart: unless-stopped
-    command: ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["python", "run_api.py", "--host", "0.0.0.0", "--port", "8000"]
+    
+  # Uncomment to enable scheduled backups (optional)
+  # backup:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: heart-disease-prediction-backup-${ENVIRONMENT:-dev}
+  #   volumes:
+  #     - ./models:/app/models
+  #     - ./data:/app/data
+  #     - ./config:/app/config
+  #     - ./backups:/app/backups
+  #   environment:
+  #     - ENVIRONMENT=${ENVIRONMENT:-dev}
+  #     - BACKUP_FREQUENCY=${BACKUP_FREQUENCY:-daily}
+  #     - KEEP_BACKUPS=${KEEP_BACKUPS:-5}
+  #     - CLOUD_BACKUP=${CLOUD_BACKUP:-false}
+  #     - CLOUD_PROVIDER=${CLOUD_PROVIDER:-s3}
+  #     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+  #     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+  #     - AWS_BUCKET_NAME=${AWS_BUCKET_NAME:-}
+  #   restart: unless-stopped
+  #   command: ["python", "scripts/scheduled_backup.py", "--cloud"]

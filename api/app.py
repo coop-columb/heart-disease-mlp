@@ -314,32 +314,30 @@ async def process_batch_optimized(patients_data, model_name=None):
 class PatientData(BaseModel):
     """Patient clinical data for heart disease prediction."""
 
-    age: int = Field(..., description="Age in years", example=61)
-    sex: int = Field(..., description="Gender (0=female, 1=male)", example=1)
-    cp: int = Field(..., description="Chest pain type (1-4)", example=3)
-    trestbps: int = Field(..., description="Resting blood pressure (mm Hg)", example=140)
-    chol: int = Field(..., description="Serum cholesterol (mg/dl)", example=240)
+    age: int = Field(..., description="Age in years")
+    sex: int = Field(..., description="Gender (0=female, 1=male)")
+    cp: int = Field(..., description="Chest pain type (1-4)")
+    trestbps: int = Field(..., description="Resting blood pressure (mm Hg)")
+    chol: int = Field(..., description="Serum cholesterol (mg/dl)")
     fbs: int = Field(
-        ..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)", example=1
+        ..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)"
     )
-    restecg: int = Field(..., description="Resting ECG results (0-2)", example=1)
-    thalach: int = Field(..., description="Maximum heart rate achieved", example=150)
-    exang: int = Field(..., description="Exercise induced angina (0=no, 1=yes)", example=1)
-    oldpeak: float = Field(..., description="ST depression induced by exercise", example=2.4)
-    slope: int = Field(..., description="Slope of the peak exercise ST segment (1-3)", example=2)
+    restecg: int = Field(..., description="Resting ECG results (0-2)")
+    thalach: int = Field(..., description="Maximum heart rate achieved")
+    exang: int = Field(..., description="Exercise induced angina (0=no, 1=yes)")
+    oldpeak: float = Field(..., description="ST depression induced by exercise")
+    slope: int = Field(..., description="Slope of the peak exercise ST segment (1-3)")
     ca: int = Field(
         ...,
         description="Number of major vessels colored by fluoroscopy (0-3)",
-        example=1,
     )
     thal: int = Field(
         ...,
         description="Thalassemia (3=normal, 6=fixed defect, 7=reversible defect)",
-        example=3,
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "age": 61,
                 "sex": 1,
@@ -356,6 +354,7 @@ class PatientData(BaseModel):
                 "thal": 3,
             }
         }
+    }
 
 
 class PredictionResponse(BaseModel):

@@ -9,7 +9,9 @@ This directory contains comprehensive documentation for the Heart Disease Predic
 | [API Documentation](api.md) | Details on the REST API endpoints, request/response formats, and examples |
 | [API Usage Examples](api_usage_examples.md) | Detailed examples of API usage with various languages |
 | [Backup & Recovery](backup_recovery.md) | Procedures for backup, restore, and cloud storage integration |
+| [CI/CD Status](cicd_status.md) | Status of CI/CD pipelines and recent improvements |
 | [Data Dictionary](data_dictionary.md) | Definitions of all data fields used in the model |
+| [Environment Configuration](environment_config.md) | Configuration for dev, staging, and production environments |
 | [Fixes Documentation](fixes_documentation.md) | History of system improvements and bug fixes |
 | [Model Architecture](model.md) | Details on the MLP models, ensemble approach, and training process |
 | [System Architecture](system_architecture.md) | Overview of system components and their interactions |
@@ -53,7 +55,8 @@ This project follows a comprehensive documentation strategy to ensure all aspect
 4. **Process Documentation**:
    - Changes and fixes are documented in fixes_documentation.md
    - Security and authentication procedures are documented
-   - Backup and recovery procedures are documented
+   - Backup and recovery procedures are documented in backup_recovery.md
+   - Environment configuration is documented in environment_config.md
    - Deployment workflows are documented
 
 5. **Integration Documentation**:

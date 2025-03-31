@@ -1,0 +1,116 @@
+# Staging Environment Configuration
+# This configuration is used for testing in a production-like environment
+
+# Data paths
+data:
+  raw_data_path: 'data/raw/heart_disease_combined.csv'
+  processed_data_path: 'data/processed/heart_disease_processed.csv'
+  external_data_path: 'data/external/medical_reference_data.csv'
+
+# Feature engineering
+preprocessing:
+  categorical_features:
+    - 'sex'
+    - 'cp'
+    - 'fbs'
+    - 'restecg'
+    - 'exang'
+    - 'slope'
+    - 'ca'
+    - 'thal'
+  numerical_features:
+    - 'age'
+    - 'trestbps'
+    - 'chol'
+    - 'thalach'
+    - 'oldpeak'
+  target: 'target'
+  test_size: 0.2
+  validation_size: 0.25
+  random_seed: 42
+
+# Model parameters
+model:
+  mlp:
+    hidden_layer_sizes: [100, 50]
+    activation: 'relu'
+    solver: 'adam'
+    alpha: 0.0001
+    learning_rate_init: 0.001
+    max_iter: 2000
+    random_state: 42
+  advanced_mlp:
+    architecture:
+      - {units: 128, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 64, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 32, activation: 'leaky_relu', dropout: 0.2, l2_regularization: 0.01}
+    batch_size: 32
+    epochs: 150
+    learning_rate: 0.001
+    early_stopping_patience: 20
+    reduce_lr_patience: 10
+
+# Evaluation
+evaluation:
+  metrics:
+    - 'accuracy'
+    - 'precision'
+    - 'recall'
+    - 'f1'
+    - 'auc'
+  cv_folds: 10
+
+# API settings
+api:
+  host: '0.0.0.0'
+  port: 8000
+  log_level: 'info'        # Standard logging for staging
+  batch_size: 50           # Production-like batch size
+  max_workers: 4           # Production-like worker count
+  performance_logging: true
+
+  # Staging-specific caching settings
+  caching:
+    enabled: true
+    max_size: 1000         # Full-size cache for performance testing
+    ttl: 3600              # 1 hour TTL
+    hash_algorithm: 'md5'
+
+  # Staging-specific authentication settings
+  auth:
+    enabled: true          # Enable auth for testing
+    secret_key: 'staging_secret_key_for_testing_only'  # Not for production
+    algorithm: 'HS256'
+    access_token_expire_minutes: 30
+    token_url: '/auth/token'
+    
+    # Staging API keys
+    api_keys:
+      - key: 'staging_api_key'
+        name: 'Staging API Key'
+      - key: 'test_api_key'
+        name: 'Testing API Key'
+    
+    # Public endpoints (no authentication required)
+    public_endpoints:
+      - '/health'
+      - '/docs'
+      - '/redoc'
+      - '/openapi.json'
+      - '/auth/token'
+
+# Backup settings
+backup:
+  local_backup_dir: 'backups'
+  backup_frequency: 'daily'
+  keep_backups: 10
+  cloud_backup: true       # Enable cloud backups for testing
+  cloud_provider: 's3'     # Use S3 for staging
+  cloud_backup_path: 'heart-disease-mlp/staging/'
+
+# Environment-specific settings
+environment:
+  name: 'staging'
+  debug: false
+  reload: false            # No hot-reloading in staging
+  testing: true            # Enable testing flags

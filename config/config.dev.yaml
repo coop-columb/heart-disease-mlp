@@ -1,0 +1,112 @@
+# Development Environment Configuration
+# This configuration is used for local development
+
+# Data paths
+data:
+  raw_data_path: 'data/raw/heart_disease_combined.csv'
+  processed_data_path: 'data/processed/heart_disease_processed.csv'
+  external_data_path: 'data/external/medical_reference_data.csv'
+
+# Feature engineering
+preprocessing:
+  categorical_features:
+    - 'sex'
+    - 'cp'
+    - 'fbs'
+    - 'restecg'
+    - 'exang'
+    - 'slope'
+    - 'ca'
+    - 'thal'
+  numerical_features:
+    - 'age'
+    - 'trestbps'
+    - 'chol'
+    - 'thalach'
+    - 'oldpeak'
+  target: 'target'
+  test_size: 0.2
+  validation_size: 0.25
+  random_seed: 42
+
+# Model parameters
+model:
+  mlp:
+    hidden_layer_sizes: [100, 50]
+    activation: 'relu'
+    solver: 'adam'
+    alpha: 0.0001
+    learning_rate_init: 0.001
+    max_iter: 2000
+    random_state: 42
+  advanced_mlp:
+    architecture:
+      - {units: 128, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 64, activation: 'leaky_relu', dropout: 0.3, l2_regularization: 0.01}
+      - {units: 32, activation: 'leaky_relu', dropout: 0.2, l2_regularization: 0.01}
+    batch_size: 32
+    epochs: 150
+    learning_rate: 0.001
+    early_stopping_patience: 20
+    reduce_lr_patience: 10
+
+# Evaluation
+evaluation:
+  metrics:
+    - 'accuracy'
+    - 'precision'
+    - 'recall'
+    - 'f1'
+    - 'auc'
+  cv_folds: 10
+
+# API settings
+api:
+  host: '0.0.0.0'
+  port: 8000
+  log_level: 'debug'  # More verbose logging for development
+  batch_size: 10       # Smaller batch size for faster development iterations
+  max_workers: 2       # Fewer workers to reduce resource usage during development
+  performance_logging: true
+
+  # Development-specific caching settings
+  caching:
+    enabled: true
+    max_size: 100      # Smaller cache size for development
+    ttl: 300           # Shorter TTL (5 minutes) for development
+    hash_algorithm: 'md5'
+
+  # Development-specific authentication settings
+  auth:
+    enabled: false     # Disabled by default for easier development
+    secret_key: 'dev_secret_key_1234567890'
+    algorithm: 'HS256'
+    access_token_expire_minutes: 60  # Longer expiry for development convenience
+    token_url: '/auth/token'
+    
+    # Development API keys
+    api_keys:
+      - key: 'dev_api_key'
+        name: 'Development API Key'
+    
+    # Public endpoints (no authentication required)
+    public_endpoints:
+      - '/health'
+      - '/docs'
+      - '/redoc'
+      - '/openapi.json'
+      - '/auth/token'
+
+# Backup settings
+backup:
+  local_backup_dir: 'backups'
+  backup_frequency: 'daily'  # How often to run scheduled backups
+  keep_backups: 5            # Number of backups to keep
+  cloud_backup: false        # Disable cloud backups for development
+
+# Environment-specific settings
+environment:
+  name: 'development'
+  debug: true
+  reload: true              # Hot-reloading for development
+  testing: false
