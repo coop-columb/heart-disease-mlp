@@ -97,7 +97,7 @@ curl -X POST "http://localhost:8000/predict?model=sklearn" \
   }'
 ```
 
-### Batch Prediction
+### Batch Prediction and Configuration
 
 Make predictions for multiple patients at once:
 
@@ -136,6 +136,73 @@ curl -X POST http://localhost:8000/predict/batch \
       "thal": 2
     }
   ]'
+```
+
+Check current batch processing configuration:
+
+```bash
+curl -X GET http://localhost:8000/batch/config
+```
+
+Expected response:
+```json
+{
+  "batch_size": 50,
+  "max_workers": 4,
+  "performance_logging": true
+}
+```
+
+Optimize batch processing for large batches:
+
+```bash
+curl -X POST http://localhost:8000/batch/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "batch_size": 100,
+    "max_workers": 8,
+    "performance_logging": true
+  }'
+```
+
+Expected response:
+```json
+{
+  "batch_size": 100,
+  "max_workers": 8,
+  "performance_logging": true
+}
+```
+
+The batch prediction endpoint returns performance metrics when enabled:
+
+```json
+{
+  "predictions": [
+    {
+      "prediction": 1,
+      "probability": 0.87,
+      "risk_level": "HIGH",
+      "model_used": "ensemble",
+      "interpretation": "The patient has a high risk of heart disease."
+    },
+    {
+      "prediction": 0,
+      "probability": 0.12,
+      "risk_level": "LOW",
+      "model_used": "ensemble",
+      "interpretation": "The patient has a low risk of heart disease."
+    }
+  ],
+  "performance_metrics": {
+    "total_patients": 2,
+    "processing_time_seconds": 0.156,
+    "throughput_patients_per_second": 12.82,
+    "num_chunks": 1,
+    "chunk_size": 50,
+    "num_workers": 4
+  }
+}
 ```
 
 ## Python Examples

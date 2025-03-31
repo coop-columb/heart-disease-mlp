@@ -256,6 +256,31 @@ For batch predictions, use an array of objects:
 ]
 ```
 
+### Batch Processing Configuration
+
+For large batch predictions, the API uses optimized processing with chunking and parallel execution. You can view and customize the batch configuration:
+
+```bash
+# View current batch configuration
+curl -X GET http://localhost:8000/batch/config
+
+# Update batch configuration
+curl -X POST http://localhost:8000/batch/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "batch_size": 100,
+    "max_workers": 8,
+    "performance_logging": true
+  }'
+```
+
+Default configuration:
+- `batch_size`: 50 patients per chunk
+- `max_workers`: 4 parallel threads
+- `performance_logging`: true (includes performance metrics in response)
+
+For very large batches (1000+ patients), increasing the batch size and worker count can significantly improve throughput.
+
 ## API Deployment
 
 ### Local Deployment
