@@ -4,6 +4,7 @@ This module provides REST API endpoints for predicting heart disease risk.
 """
 
 # flake8: noqa: F401, E501
+import asyncio
 import logging
 import os
 import sys
