@@ -3,12 +3,16 @@ FastAPI application for heart disease prediction API.
 This module provides REST API endpoints for predicting heart disease risk.
 """
 
+import asyncio
+
 # flake8: noqa: F401, E501
 import logging
 import os
 import sys
+import time
 import traceback
-from typing import Dict, List, Optional, Union
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List, Optional, Tuple, Union
 
 # Clean Python path to avoid conflicts with other projects
 original_path = list(sys.path)
@@ -57,8 +61,16 @@ except ImportError as e:
 # Load configuration
 config = load_config()
 
+# Batch processing configuration
+BATCH_SIZE = config.get("api", {}).get("batch_size", 50)  # Default chunk size of 50 patients
+MAX_WORKERS = config.get("api", {}).get("max_workers", 4)  # Default to 4 parallel workers
+PERFORMANCE_LOGGING = config.get("api", {}).get("performance_logging", True)
+
 # Initialize model predictor
 model_predictor = HeartDiseasePredictor(model_dir="models")
+
+# Initialize thread pool for parallel processing
+thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 # Create FastAPI app
 app = FastAPI(
@@ -82,6 +94,189 @@ os.makedirs(static_dir, exist_ok=True)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+def process_patient_chunk(patients_chunk, model_name=None):
+    """
+    Process a chunk of patients in parallel.
+
+    Args:
+        patients_chunk: List of patient dictionaries to process
+        model_name: Optional model to use for predictions
+
+    Returns:
+        List of prediction results for each patient
+    """
+    chunk_results = []
+
+    for i, patient_dict in enumerate(patients_chunk):
+        try:
+            # Make prediction for this patient
+            prediction_result = model_predictor.predict(
+                patient_dict, return_probabilities=True, return_interpretation=True
+            )
+
+            # Check for error in prediction result
+            if "error" in prediction_result:
+                chunk_results.append(
+                    {
+                        "prediction": 0,
+                        "probability": 0.0,
+                        "risk_level": "ERROR",
+                        "interpretation": f"Error: {prediction_result['error']}",
+                        "model_used": None,
+                    }
+                )
+                continue
+
+            # Select model based on parameter
+            model_used = None
+            prediction = None
+            probability = None
+
+            # Try the specifically requested model first
+            if model_name == "sklearn" and "sklearn_predictions" in prediction_result:
+                prediction = prediction_result["sklearn_predictions"][0]
+                probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                model_used = "sklearn_mlp"
+            elif model_name == "keras" and "keras_predictions" in prediction_result:
+                prediction = prediction_result["keras_predictions"][0]
+                probability = prediction_result.get("keras_probabilities", [None])[0]
+                model_used = "keras_mlp"
+            elif model_name == "ensemble" and "ensemble_predictions" in prediction_result:
+                prediction = prediction_result["ensemble_predictions"][0]
+                probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                model_used = "ensemble"
+            # If no specific model requested or requested model not available, use best available
+            elif "ensemble_predictions" in prediction_result:
+                prediction = prediction_result["ensemble_predictions"][0]
+                probability = prediction_result.get("ensemble_probabilities", [None])[0]
+                model_used = "ensemble"
+            elif "sklearn_predictions" in prediction_result:
+                prediction = prediction_result["sklearn_predictions"][0]
+                probability = prediction_result.get("sklearn_probabilities", [None])[0]
+                model_used = "sklearn_mlp"
+            elif "keras_predictions" in prediction_result:
+                prediction = prediction_result["keras_predictions"][0]
+                probability = prediction_result.get("keras_probabilities", [None])[0]
+                model_used = "keras_mlp"
+
+            # Handle case where no predictions are available
+            if prediction is None or model_used is None:
+                chunk_results.append(
+                    {
+                        "prediction": 0,
+                        "probability": 0.0,
+                        "risk_level": "ERROR",
+                        "interpretation": "No predictions available from any model",
+                        "model_used": None,
+                    }
+                )
+                continue
+
+            # Handle missing probability
+            if probability is None:
+                probability = 0.5
+
+            # Determine risk level
+            if probability < 0.3:
+                risk_level = "LOW"
+            elif probability < 0.6:
+                risk_level = "MODERATE"
+            else:
+                risk_level = "HIGH"
+
+            # Get interpretation if available
+            interpretation = prediction_result.get("interpretation", None)
+
+            # Add result for this patient
+            chunk_results.append(
+                {
+                    "prediction": int(prediction),
+                    "probability": float(probability),
+                    "risk_level": risk_level,
+                    "interpretation": interpretation,
+                    "model_used": model_used,
+                }
+            )
+
+        except Exception as e:
+            # Log and continue with next patient if one fails
+            logger.error(f"Error processing patient: {str(e)}")
+            chunk_results.append(
+                {
+                    "prediction": 0,
+                    "probability": 0.0,
+                    "risk_level": "ERROR",
+                    "interpretation": f"Error processing patient: {str(e)}",
+                    "model_used": None,
+                }
+            )
+
+    return chunk_results
+
+
+async def process_batch_optimized(patients_data, model_name=None):
+    """
+    Process a batch of patients using chunking and parallel processing.
+
+    Args:
+        patients_data: List of PatientData objects
+        model_name: Optional model to use for predictions
+
+    Returns:
+        Tuple of (predictions, performance_metrics)
+    """
+    start_time = time.time()
+
+    # Convert patients data to dictionaries
+    patient_dicts = []
+    for patient in patients_data:
+        # Support both Pydantic v1 (dict) and v2 (model_dump)
+        patient_dict = patient.model_dump() if hasattr(patient, "model_dump") else patient.dict()
+        patient_dicts.append(patient_dict)
+
+    # Split patients into chunks
+    chunks = [patient_dicts[i : i + BATCH_SIZE] for i in range(0, len(patient_dicts), BATCH_SIZE)]
+    logger.info(
+        f"Processing {len(patient_dicts)} patients in {len(chunks)} chunks of size {BATCH_SIZE}"
+    )
+
+    # Process chunks in parallel using ThreadPoolExecutor
+    tasks = []
+    loop = asyncio.get_event_loop()
+    for chunk in chunks:
+        task = loop.run_in_executor(thread_pool, process_patient_chunk, chunk, model_name)
+        tasks.append(task)
+
+    # Wait for all chunks to complete
+    chunk_results = await asyncio.gather(*tasks)
+
+    # Flatten results
+    all_results = []
+    for chunk in chunk_results:
+        all_results.extend(chunk)
+
+    # Calculate performance metrics
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    throughput = len(patient_dicts) / elapsed_time if elapsed_time > 0 else 0
+
+    performance_metrics = {
+        "total_patients": len(patient_dicts),
+        "processing_time_seconds": round(elapsed_time, 3),
+        "throughput_patients_per_second": round(throughput, 3),
+        "num_chunks": len(chunks),
+        "chunk_size": BATCH_SIZE,
+        "num_workers": MAX_WORKERS,
+    }
+
+    logger.info(
+        f"Batch processing completed in {elapsed_time:.2f} seconds. "
+        f"Throughput: {throughput:.2f} patients/second"
+    )
+
+    return all_results, performance_metrics
 
 
 # Define request models
@@ -152,6 +347,10 @@ class BatchPredictionResponse(BaseModel):
     predictions: List[PredictionResponse] = Field(
         ...,
         description="List of predictions for each patient, including any that resulted in errors",
+    )
+    performance_metrics: Optional[Dict[str, float]] = Field(
+        None,
+        description="Performance metrics for the batch prediction operation (if enabled)",
     )
 
 
@@ -285,7 +484,7 @@ async def predict(patient_data: PatientData, model: str = None):
 @app.post("/predict/batch", response_model=BatchPredictionResponse)
 async def predict_batch(patients_data: List[PatientData], model: str = None):
     """
-    Predict heart disease risk for multiple patients.
+    Predict heart disease risk for multiple patients using optimized batch processing.
 
     Args:
         patients_data: List of patient clinical parameters
@@ -299,134 +498,23 @@ async def predict_batch(patients_data: List[PatientData], model: str = None):
     )
 
     try:
-        results = []
+        # If batch is empty, return an error
+        if not patients_data:
+            raise ValueError("No valid predictions could be made for any patients in the batch")
 
-        # Process each patient
-        for i, patient_data in enumerate(patients_data):
-            try:
-                # Convert patient data to dictionary
-                # Support both Pydantic v1 (dict) and v2 (model_dump)
-                patient_dict = (
-                    patient_data.model_dump()
-                    if hasattr(patient_data, "model_dump")
-                    else patient_data.dict()
-                )
-
-                # Make prediction
-                prediction_result = model_predictor.predict(
-                    patient_dict, return_probabilities=True, return_interpretation=True
-                )
-
-                # Check for error in prediction result
-                if "error" in prediction_result:
-                    logger.warning(
-                        f"Prediction error for patient {i}: {prediction_result['error']}"
-                    )
-                    results.append(
-                        {
-                            "prediction": 0,
-                            "probability": 0.0,
-                            "risk_level": "ERROR",
-                            "interpretation": f"Error: {prediction_result['error']}",
-                            "model_used": None,
-                        }
-                    )
-                    continue
-
-                # Select model based on parameter if provided
-                model_used = None
-                prediction = None
-                probability = None
-
-                # Try the specifically requested model first
-                if model == "sklearn" and "sklearn_predictions" in prediction_result:
-                    prediction = prediction_result["sklearn_predictions"][0]
-                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
-                    model_used = "sklearn_mlp"
-                elif model == "keras" and "keras_predictions" in prediction_result:
-                    prediction = prediction_result["keras_predictions"][0]
-                    probability = prediction_result.get("keras_probabilities", [None])[0]
-                    model_used = "keras_mlp"
-                elif model == "ensemble" and "ensemble_predictions" in prediction_result:
-                    prediction = prediction_result["ensemble_predictions"][0]
-                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
-                    model_used = "ensemble"
-                # If no specific model requested or requested model not available, use best available
-                elif "ensemble_predictions" in prediction_result:
-                    prediction = prediction_result["ensemble_predictions"][0]
-                    probability = prediction_result.get("ensemble_probabilities", [None])[0]
-                    model_used = "ensemble"
-                elif "sklearn_predictions" in prediction_result:
-                    prediction = prediction_result["sklearn_predictions"][0]
-                    probability = prediction_result.get("sklearn_probabilities", [None])[0]
-                    model_used = "sklearn_mlp"
-                elif "keras_predictions" in prediction_result:
-                    prediction = prediction_result["keras_predictions"][0]
-                    probability = prediction_result.get("keras_probabilities", [None])[0]
-                    model_used = "keras_mlp"
-
-                # Handle case where no predictions are available
-                if prediction is None or model_used is None:
-                    logger.warning(f"No valid predictions found for patient {i}")
-                    results.append(
-                        {
-                            "prediction": 0,
-                            "probability": 0.0,
-                            "risk_level": "ERROR",
-                            "interpretation": "No predictions available from any model",
-                            "model_used": None,
-                        }
-                    )
-                    continue
-
-                # Handle missing probability
-                if probability is None:
-                    logger.warning(
-                        f"Probability value missing for patient {i}, using default of 0.5"
-                    )
-                    probability = 0.5
-
-                # Determine risk level
-                if probability < 0.3:
-                    risk_level = "LOW"
-                elif probability < 0.6:
-                    risk_level = "MODERATE"
-                else:
-                    risk_level = "HIGH"
-
-                # Get interpretation if available
-                interpretation = prediction_result.get("interpretation", None)
-
-                # Add result for this patient
-                results.append(
-                    {
-                        "prediction": int(prediction),
-                        "probability": float(probability),
-                        "risk_level": risk_level,
-                        "interpretation": interpretation,
-                        "model_used": model_used,
-                    }
-                )
-
-            except Exception as e:
-                # Log and continue with next patient if one fails
-                logger.error(f"Error processing patient {i}: {str(e)}")
-                results.append(
-                    {
-                        "prediction": 0,
-                        "probability": 0.0,
-                        "risk_level": "ERROR",
-                        "interpretation": f"Error processing patient: {str(e)}",
-                        "model_used": None,
-                    }
-                )
+        # Process batch with optimized chunking and parallel processing
+        results, performance_metrics = await process_batch_optimized(patients_data, model)
 
         # If no valid results were obtained, raise an exception
         if not results:
             raise ValueError("No valid predictions could be made for any patients in the batch")
 
-        # Return batch results
-        return {"predictions": results}
+        # Return batch results with performance metrics if enabled
+        response = {"predictions": results}
+        if PERFORMANCE_LOGGING:
+            response["performance_metrics"] = performance_metrics
+
+        return response
 
     except ValueError as e:
         # Handle validation errors
@@ -470,6 +558,82 @@ async def get_model_info():
     except Exception as e:
         logger.error(f"Error getting model info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting model info: {str(e)}")
+
+
+class BatchConfig(BaseModel):
+    """Configuration for batch processing."""
+
+    batch_size: Optional[int] = Field(
+        None, description="Number of patients to process in each chunk", ge=1, le=1000
+    )
+    max_workers: Optional[int] = Field(
+        None, description="Maximum number of worker threads for parallel processing", ge=1, le=20
+    )
+    performance_logging: Optional[bool] = Field(
+        None, description="Whether to include performance metrics in the response"
+    )
+
+
+@app.get("/batch/config")
+async def get_batch_config():
+    """
+    Get current batch processing configuration.
+
+    Returns:
+        Current batch processing configuration
+    """
+    logger.info("Received batch configuration request")
+
+    return {
+        "batch_size": BATCH_SIZE,
+        "max_workers": MAX_WORKERS,
+        "performance_logging": PERFORMANCE_LOGGING,
+    }
+
+
+@app.post("/batch/config")
+async def update_batch_config(config: BatchConfig):
+    """
+    Update batch processing configuration.
+
+    Args:
+        config: New batch processing configuration
+
+    Returns:
+        Updated batch processing configuration
+    """
+    global BATCH_SIZE, MAX_WORKERS, PERFORMANCE_LOGGING, thread_pool
+
+    logger.info(f"Received batch configuration update request: {config}")
+
+    try:
+        # Update configuration parameters if provided
+        if config.batch_size is not None:
+            BATCH_SIZE = config.batch_size
+
+        if config.max_workers is not None and config.max_workers != MAX_WORKERS:
+            MAX_WORKERS = config.max_workers
+            # Recreate thread pool with new worker count
+            thread_pool.shutdown(wait=True)
+            thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
+        if config.performance_logging is not None:
+            PERFORMANCE_LOGGING = config.performance_logging
+
+        logger.info(
+            f"Batch configuration updated: batch_size={BATCH_SIZE}, "
+            f"max_workers={MAX_WORKERS}, performance_logging={PERFORMANCE_LOGGING}"
+        )
+
+        return {
+            "batch_size": BATCH_SIZE,
+            "max_workers": MAX_WORKERS,
+            "performance_logging": PERFORMANCE_LOGGING,
+        }
+
+    except Exception as e:
+        logger.error(f"Error updating batch configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating batch configuration: {str(e)}")
 
 
 if __name__ == "__main__":

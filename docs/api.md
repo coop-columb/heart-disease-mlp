@@ -118,6 +118,46 @@ The API provides the following endpoints:
 }
 ```
 
+### Batch Configuration
+
+- **URL**: `/batch/config`
+- **Method**: `GET`
+- **Description**: Gets the current batch processing configuration.
+- **Response**: Configuration parameters for batch prediction processing.
+
+**Example Response**:
+```json
+{
+  "batch_size": 50,
+  "max_workers": 4,
+  "performance_logging": true
+}
+```
+
+- **URL**: `/batch/config`
+- **Method**: `POST`
+- **Description**: Updates the batch processing configuration.
+- **Request**: JSON object containing batch processing parameters to update.
+- **Response**: Updated configuration parameters for batch prediction processing.
+
+**Example Request**:
+```json
+{
+  "batch_size": 100,
+  "max_workers": 8,
+  "performance_logging": true
+}
+```
+
+**Example Response**:
+```json
+{
+  "batch_size": 100,
+  "max_workers": 8,
+  "performance_logging": true
+}
+```
+
 ### Prediction
 
 - **URL**: `/predict`
@@ -210,6 +250,56 @@ The prediction endpoint returns a JSON object with the following fields:
 }
 ```
 
+### Batch Prediction Response
+
+The batch prediction endpoint returns a JSON object with the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| predictions | array | Array of prediction results for each patient |
+| performance_metrics | object | Performance metrics for the batch operation (if enabled) |
+
+Each prediction in the array follows the same format as the single prediction response. The performance_metrics object includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| total_patients | integer | Total number of patients processed |
+| processing_time_seconds | float | Total processing time in seconds |
+| throughput_patients_per_second | float | Processing throughput rate |
+| num_chunks | integer | Number of chunks the batch was divided into |
+| chunk_size | integer | Size of each processing chunk |
+| num_workers | integer | Number of parallel workers used |
+
+**Example Response**:
+```json
+{
+  "predictions": [
+    {
+      "prediction": 1,
+      "probability": 0.87,
+      "risk_level": "HIGH",
+      "model_used": "ensemble",
+      "interpretation": "The patient has a high risk of heart disease."
+    },
+    {
+      "prediction": 0,
+      "probability": 0.12,
+      "risk_level": "LOW",
+      "model_used": "ensemble",
+      "interpretation": "The patient has a low risk of heart disease."
+    }
+  ],
+  "performance_metrics": {
+    "total_patients": 2,
+    "processing_time_seconds": 0.156,
+    "throughput_patients_per_second": 12.82,
+    "num_chunks": 1,
+    "chunk_size": 50,
+    "num_workers": 4
+  }
+}
+```
+
 ## Error Handling
 
 The API uses standard HTTP status codes to indicate the success or failure of a request:
@@ -257,6 +347,18 @@ curl -X GET http://localhost:8000/health
 # Model information
 curl -X GET http://localhost:8000/models/info
 
+# Get batch configuration
+curl -X GET http://localhost:8000/batch/config
+
+# Update batch configuration
+curl -X POST http://localhost:8000/batch/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "batch_size": 100,
+    "max_workers": 8,
+    "performance_logging": true
+  }'
+
 # Make a prediction
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
@@ -275,6 +377,42 @@ curl -X POST http://localhost:8000/predict \
     "ca": 1,
     "thal": 3
   }'
+
+# Make a batch prediction
+curl -X POST http://localhost:8000/predict/batch \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "age": 61,
+      "sex": 1,
+      "cp": 3,
+      "trestbps": 140,
+      "chol": 240,
+      "fbs": 1,
+      "restecg": 1,
+      "thalach": 150,
+      "exang": 1,
+      "oldpeak": 2.4,
+      "slope": 2,
+      "ca": 1,
+      "thal": 3
+    },
+    {
+      "age": 45,
+      "sex": 0,
+      "cp": 1,
+      "trestbps": 120,
+      "chol": 180,
+      "fbs": 0,
+      "restecg": 0,
+      "thalach": 175,
+      "exang": 0,
+      "oldpeak": 0.2,
+      "slope": 1,
+      "ca": 0,
+      "thal": 2
+    }
+  ]'
 ```
 
 ### Using Python
@@ -294,7 +432,20 @@ print(f"Health check: {response.json()}")
 response = requests.get(f"{base_url}/models/info")
 print(f"Model information: {response.json()}")
 
-# Make a prediction
+# Get batch configuration
+response = requests.get(f"{base_url}/batch/config")
+print(f"Batch configuration: {response.json()}")
+
+# Update batch configuration for performance
+batch_config = {
+    "batch_size": 100,
+    "max_workers": 8,
+    "performance_logging": True
+}
+response = requests.post(f"{base_url}/batch/config", json=batch_config)
+print(f"Updated batch configuration: {response.json()}")
+
+# Make a single prediction
 patient_data = {
     "age": 61,
     "sex": 1,
@@ -311,16 +462,71 @@ patient_data = {
     "thal": 3
 }
 
-response = requests.post(
-    f"{base_url}/predict",
-    json=patient_data
-)
+response = requests.post(f"{base_url}/predict", json=patient_data)
 
 if response.status_code == 200:
     result = response.json()
     print(f"Prediction: {result['prediction']}")
     print(f"Probability: {result['probability']}")
     print(f"Risk Level: {result['risk_level']}")
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+
+# Make a batch prediction
+batch_data = [
+    {
+        "age": 61,
+        "sex": 1,
+        "cp": 3,
+        "trestbps": 140,
+        "chol": 240,
+        "fbs": 1,
+        "restecg": 1,
+        "thalach": 150,
+        "exang": 1,
+        "oldpeak": 2.4,
+        "slope": 2,
+        "ca": 1,
+        "thal": 3
+    },
+    {
+        "age": 45,
+        "sex": 0,
+        "cp": 1,
+        "trestbps": 120,
+        "chol": 180,
+        "fbs": 0,
+        "restecg": 0,
+        "thalach": 175,
+        "exang": 0,
+        "oldpeak": 0.2,
+        "slope": 1,
+        "ca": 0,
+        "thal": 2
+    }
+]
+
+response = requests.post(f"{base_url}/predict/batch", json=batch_data)
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"Processed {len(result['predictions'])} patients")
+
+    # Print predictions
+    for i, prediction in enumerate(result['predictions']):
+        print(f"Patient {i+1}:")
+        print(f"  Prediction: {prediction['prediction']}")
+        print(f"  Probability: {prediction['probability']}")
+        print(f"  Risk Level: {prediction['risk_level']}")
+
+    # Print performance metrics if available
+    if 'performance_metrics' in result:
+        metrics = result['performance_metrics']
+        print("\nPerformance Metrics:")
+        print(f"  Processing Time: {metrics['processing_time_seconds']} seconds")
+        print(f"  Throughput: {metrics['throughput_patients_per_second']} patients/second")
+        print(f"  Chunks: {metrics['num_chunks']} (size: {metrics['chunk_size']})")
+        print(f"  Workers: {metrics['num_workers']}")
 else:
     print(f"Error: {response.status_code} - {response.text}")
 ```

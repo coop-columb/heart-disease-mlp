@@ -54,7 +54,7 @@ Based on the completed features and the project roadmap, the following items are
 ### 1. Optimization
 
 - ✅ Address TensorFlow NumPy array conversion warning
-- [ ] Optimize batch prediction performance for large batches
+- ✅ Optimize batch prediction performance for large batches
 - [ ] Implement model caching for improved throughput
 
 ### 2. Documentation
@@ -109,6 +109,8 @@ The most recent enhancements include:
 9. Updated GitHub Actions workflows to use latest versions
 10. Fixed failing tests due to HTML UI implementation
 11. Improved workflow resilience with better error handling
+12. Optimized batch prediction performance with chunking and parallel processing
+13. Added configurable batch processing parameters via API endpoint
 
 ## Conclusion
 
