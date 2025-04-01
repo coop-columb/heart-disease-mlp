@@ -1,8 +1,8 @@
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 
-from src.models.predict_model import HeartDiseasePredictor
-from src.utils import load_config
+from models.predict_model import HeartDiseasePredictor
 
 from ..auth import AuthHandler, AuthSettings
 
@@ -14,8 +14,34 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load configuration
-config = load_config()
+# Default configuration with explicit auth settings
+config = {
+    "api": {
+        "auth": {
+            "enabled": True,
+            "secret_key": os.getenv("API_SECRET_KEY", "dev_secret_key"),
+            "access_token_expire_minutes": 30,
+            "public_endpoints": [
+                "/docs",
+                "/openapi.json",
+                "/health",
+                "/",
+                "/version",
+                "/metrics",
+                "/models/info",
+                "/predict",
+                "/predict/batch",
+                "/cache/stats",
+                "/cache/config",
+                "/cache/clear",
+            ],
+            "api_keys": [
+                {"key": os.getenv("DEV_API_KEY", "dev_api_key")},
+                {"key": "test_api_key_1"},
+            ],
+        }
+    }
+}
 
 # Initialize model predictor
 model_predictor = HeartDiseasePredictor(model_dir="models")

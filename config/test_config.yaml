@@ -1,0 +1,16 @@
+api:
+  host: "0.0.0.0"
+  port: 8000
+  auth:
+    enabled: true
+    api_keys:
+      - key: dev_api_key
+        name: "Test API Key"
+    secret_key: "super_secret_test"
+    algorithm: "HS256"
+    access_token_expire_minutes: 30
+  caching:
+    enabled: false
+
+model:
+  path: "models/sklearn_mlp_model.joblib"

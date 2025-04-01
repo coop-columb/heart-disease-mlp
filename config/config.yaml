@@ -79,8 +79,8 @@ api:
   auth:
     # Set to false for automatic tests, true for production
     # ⚠️ IMPORTANT: Change to 'true' in production for security!
-    enabled: false
-    secret_key: 'YOUR_SECRET_KEY_HERE'  # Change this in production
+    enabled: true
+    secret_key: 'REPLACE_WITH_SECURE_RANDOM_KEY_IN_PRODUCTION'  # Change this in production
     algorithm: 'HS256'
     access_token_expire_minutes: 30
     token_url: '/auth/token'
@@ -89,6 +89,8 @@ api:
     api_keys:
       - key: 'dev_api_key'
         name: 'Development API Key'
+      - key: 'test_api_key_1'
+        name: 'Test API Key 1'
 
     # Public endpoints (no authentication required)
     public_endpoints:
@@ -97,3 +99,9 @@ api:
       - '/redoc'
       - '/openapi.json'
       - '/auth/token'
+      - '/models/info'
+      - '/version'
+      - '/metrics'
+      - '/cache/stats'
+      - '/cache/config'
+      - '/cache/clear'

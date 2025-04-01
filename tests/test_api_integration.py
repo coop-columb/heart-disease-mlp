@@ -51,44 +51,55 @@ def test_error_handling(client, invalid_patient_data):
 
 def test_missing_model_fallback(sample_patient_data):
     """Test that predictor falls back to available models when some are missing."""
-    # Import here to avoid circular import with conftest.py
     from src.models.predict_model import HeartDiseasePredictor
 
     # Mock the HeartDiseasePredictor to simulate missing models
     with mock.patch.object(HeartDiseasePredictor, "__init__", return_value=None):
-        # Create the mock instance
         predictor_mock = HeartDiseasePredictor.__new__(HeartDiseasePredictor)
 
         # Configure mock properties
-        predictor_mock.sklearn_model = None  # Simulate sklearn model missing
-        predictor_mock.keras_model = mock.MagicMock()  # Keras available
+        predictor_mock.sklearn_model = None
+        predictor_mock.keras_model = mock.MagicMock()
         predictor_mock.preprocessor = mock.MagicMock()
         predictor_mock.has_sklearn_model = False
         predictor_mock.has_keras_model = True
         predictor_mock.has_ensemble_model = False
+        predictor_mock.ensemble_weights = None
+        predictor_mock.cache_enabled = False
 
-        # Mock predict method to simulate keras model available
+        # Mock predict method with proper return structure
+        prediction_result = {
+            "prediction": 1,
+            "probability": 0.75,
+            "keras_mlp_predictions": [1],
+            "keras_mlp_probabilities": [0.75],
+            "sklearn_predictions": None,
+            "sklearn_probabilities": None,
+            "model_used": "keras_mlp",
+            "interpretation": "Test interpretation",
+        }
+
         def mock_predict(*args, **kwargs):
-            return {
-                "keras_predictions": [1],
-                "keras_probabilities": [0.75],
-                "model_used": "keras_mlp",  # Add model_used field to match current implementation
-            }
+            return prediction_result
+
+        def mock_process_prediction(*args, **kwargs):
+            return prediction_result
 
         predictor_mock.predict = mock_predict
+        predictor_mock.get_cached_prediction = mock_predict
+        predictor_mock.process_prediction = mock_process_prediction
 
-        # Create a test client with the mock
+        # Create a test client with the correct mock path
         with mock.patch("src.heart_api.main.model_predictor", predictor_mock):
-            client = TestClient(app)
+            with mock.patch("src.heart_api.api.endpoints.model_predictor", predictor_mock):
+                client = TestClient(app)
+                response = client.post("/predict", json=sample_patient_data)
 
-            # Prediction should work even with only keras model
-            response = client.post("/predict", json=sample_patient_data)
-            assert response.status_code == 200
-
-            data = response.json()
-            assert data["model_used"] == "keras_mlp"
-            assert data["prediction"] == 1
-            assert data["probability"] == 0.75
+                assert response.status_code == 200
+                data = response.json()
+                assert data["model_used"] == "keras_mlp"
+                assert data["prediction"] == 1
+                assert data["probability"] == 0.75
 
 
 def test_batch_endpoint_exists(client, sample_patients_batch):

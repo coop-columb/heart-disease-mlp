@@ -9,6 +9,7 @@ dependencies = [
   "fastapi",
   "uvicorn[standard]",
   "pydantic",
+  "PyJWT",
   "numpy",
   "pandas",
   "scikit-learn",

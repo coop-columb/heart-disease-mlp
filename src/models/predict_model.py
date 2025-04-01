@@ -14,10 +14,11 @@ from collections import OrderedDict
 import joblib
 import numpy as np
 import pandas as pd
+from cachetools import TTLCache
 from tensorflow import keras
 
-from src.models.mlp_model import combine_predictions, interpret_prediction
-from src.utils import load_config
+from models.mlp_model import combine_predictions, interpret_prediction
+from utils import load_config
 
 # Configure logging
 logging.basicConfig(
@@ -36,166 +37,75 @@ CACHE_HASH_ALGORITHM = cache_config.get("hash_algorithm", "md5")
 
 
 class PredictionCache:
-    """Cache for storing and retrieving prediction results."""
+    """Cache for model predictions."""
 
     def __init__(self, max_size=CACHE_MAX_SIZE, ttl=CACHE_TTL):
-        """
-        Initialize the prediction cache.
-
-        Args:
-            max_size: Maximum number of entries in the cache
-            ttl: Time-to-live in seconds for cache entries
-        """
+        """Initialize the cache with size and TTL settings."""
         self.max_size = max_size
         self.ttl = ttl
-        self.cache = OrderedDict()  # OrderedDict for LRU behavior
-        self.stats = {
-            "hits": 0,
-            "misses": 0,
-            "entries": 0,
-            "evictions": 0,
-            "created_at": datetime.datetime.now().isoformat(),
-        }
+        self.cache = TTLCache(maxsize=max_size, ttl=ttl)
+        self.hits = 0
+        self.misses = 0
+        self.enabled = True
 
-    def _generate_key(self, data, model=None):
-        """
-        Generate a cache key from input data and model.
-
-        Args:
-            data: Input data for prediction
-            model: Optional model name to use
-
-        Returns:
-            String hash key
-        """
-        # Convert data to a consistent format
-        if isinstance(data, dict):
-            # Sort to ensure consistent order
-            serialized = json.dumps(data, sort_keys=True)
-        elif isinstance(data, pd.DataFrame):
-            # Convert DataFrame to sorted dict
-            serialized = json.dumps(data.to_dict(orient="records"), sort_keys=True)
-        else:
-            # Convert any other type to string
-            serialized = str(data)
-
-        # Add model to the key if provided
-        if model:
-            serialized += f"_model_{model}"
-
-        # Create hash using configured algorithm
-        if CACHE_HASH_ALGORITHM == "md5":
-            return hashlib.md5(serialized.encode()).hexdigest()
-        elif CACHE_HASH_ALGORITHM == "sha1":
-            return hashlib.sha1(serialized.encode()).hexdigest()
-        else:
-            # Default to md5
-            return hashlib.md5(serialized.encode()).hexdigest()
-
-    def get(self, data, model=None):
-        """
-        Get cached prediction result.
-
-        Args:
-            data: Input data for prediction
-            model: Optional model name to use
-
-        Returns:
-            Cached prediction result or None if not in cache
-        """
-        if not CACHE_ENABLED:
+    def _make_key(self, data, model=None):
+        """Create a cache key from input data and model type."""
+        try:
+            if isinstance(data, dict):
+                # Sort dictionary items to ensure consistent key generation
+                data_str = json.dumps(data, sort_keys=True)
+            else:
+                # Convert DataFrame or array to string
+                data_str = str(data)
+            return f"{data_str}:{model or 'default'}"
+        except Exception as e:
+            logger.error(f"Error creating cache key: {e}")
             return None
 
-        key = self._generate_key(data, model)
+    def get(self, data, model=None):
+        """Get prediction from cache."""
+        if not self.enabled:
+            return None
 
-        if key in self.cache:
-            entry = self.cache[key]
-            current_time = time.time()
+        key = self._make_key(data, model)
+        if not key:
+            return None
 
-            # Check if entry is expired
-            if current_time - entry["timestamp"] > self.ttl:
-                # Remove expired entry
-                del self.cache[key]
-                self.stats["entries"] -= 1
-                self.stats["misses"] += 1
-                return None
-
-            # Move to end (most recently used)
-            self.cache.move_to_end(key)
-            self.stats["hits"] += 1
-            return entry["result"]
-
-        self.stats["misses"] += 1
-        return None
+        result = self.cache.get(key)
+        if result is not None:
+            self.hits += 1
+        else:
+            self.misses += 1
+        return result
 
     def put(self, data, model, result):
-        """
-        Store prediction result in cache.
-
-        Args:
-            data: Input data for prediction
-            model: Model name used for prediction
-            result: Prediction result to cache
-        """
-        if not CACHE_ENABLED:
+        """Store prediction in cache."""
+        if not self.enabled:
             return
 
-        key = self._generate_key(data, model)
-
-        # Create cache entry
-        entry = {
-            "timestamp": time.time(),
-            "result": result,
-        }
-
-        # Add to cache
-        if key in self.cache:
-            # Just update existing entry
-            self.cache[key] = entry
-            # Move to end (most recently used)
-            self.cache.move_to_end(key)
-        else:
-            # Check if cache is full
-            if len(self.cache) >= self.max_size:
-                # Remove oldest entry (first item in OrderedDict)
-                self.cache.popitem(last=False)
-                self.stats["evictions"] += 1
-                self.stats["entries"] -= 1
-
-            # Add new entry
-            self.cache[key] = entry
-            self.stats["entries"] += 1
+        key = self._make_key(data, model)
+        if key:
+            self.cache[key] = result
 
     def clear(self):
         """Clear the cache."""
         self.cache.clear()
-        self.stats["entries"] = 0
-        self.stats["evictions"] = 0
-        self.stats["hits"] = 0
-        self.stats["misses"] = 0
-        self.stats["created_at"] = datetime.datetime.now().isoformat()
+        self.hits = 0
+        self.misses = 0
+        return {"status": "ok", "message": "Cache cleared successfully"}
 
     def get_stats(self):
-        """
-        Get cache statistics.
-
-        Returns:
-            Dictionary of cache statistics
-        """
-        hit_rate = 0
-        if (self.stats["hits"] + self.stats["misses"]) > 0:
-            hit_rate = self.stats["hits"] / (self.stats["hits"] + self.stats["misses"])
-
+        """Get cache statistics."""
+        total_requests = self.hits + self.misses
+        hit_rate = self.hits / total_requests if total_requests > 0 else 0
         return {
-            "enabled": CACHE_ENABLED,
+            "enabled": self.enabled,
             "max_size": self.max_size,
-            "ttl_seconds": self.ttl,
-            "entries": self.stats["entries"],
-            "hits": self.stats["hits"],
-            "misses": self.stats["misses"],
-            "hit_rate": round(hit_rate, 3),
-            "evictions": self.stats["evictions"],
-            "created_at": self.stats["created_at"],
+            "ttl": self.ttl,
+            "current_size": len(self.cache),
+            "hits": self.hits,
+            "misses": self.misses,
+            "hit_rate": hit_rate,
         }
 
 
@@ -203,12 +113,7 @@ class HeartDiseasePredictor:
     """Heart disease prediction model wrapper."""
 
     def __init__(self, model_dir="models"):
-        """
-        Initialize the predictor with trained models.
-
-        Args:
-            model_dir: Directory containing trained models
-        """
+        """Initialize the predictor with models and cache settings."""
         self.model_dir = model_dir
         self.sklearn_model = None
         self.keras_model = None
@@ -217,8 +122,17 @@ class HeartDiseasePredictor:
         self.has_keras_model = False
         self.has_ensemble_model = False
 
-        # Initialize prediction cache
+        # Initialize cache settings
+        self.cache_enabled = True
+        self.cache_max_size = 1000  # default max size
+        self.cache_ttl = 3600  # default TTL in seconds
+
+        # Initialize cache
         self.cache = PredictionCache(max_size=CACHE_MAX_SIZE, ttl=CACHE_TTL)
+
+        self.total_predictions = 0
+        self.cache_hits = 0
+        self.cache_misses = 0
 
         # Load models
         self.load_models()
@@ -227,37 +141,47 @@ class HeartDiseasePredictor:
         """Load trained models from disk."""
         logger.info(f"Loading models from {self.model_dir}")
 
+        # Log the absolute paths
+        sklearn_path = os.path.join(self.model_dir, "sklearn_mlp_model.joblib")
+        keras_path = os.path.join(self.model_dir, "keras_mlp_model.h5")
+        preprocessor_path = os.path.join("data/processed/preprocessor.joblib")
+
+        logger.info(f"Attempting to load scikit-learn model from: {os.path.abspath(sklearn_path)}")
+        logger.info(f"Attempting to load Keras model from: {os.path.abspath(keras_path)}")
+        logger.info(f"Attempting to load preprocessor from: {os.path.abspath(preprocessor_path)}")
+
         try:
             # Load scikit-learn model
-            sklearn_path = os.path.join(self.model_dir, "sklearn_mlp_model.joblib")
             if os.path.exists(sklearn_path):
+                logger.info("Found scikit-learn model file")
                 self.sklearn_model = joblib.load(sklearn_path)
                 self.has_sklearn_model = True
-                logger.info("Loaded scikit-learn model")
+                logger.info("Successfully loaded scikit-learn model")
             else:
                 self.has_sklearn_model = False
                 logger.warning(f"scikit-learn model not found at {sklearn_path}")
 
             # Load Keras model
-            keras_path = os.path.join(self.model_dir, "keras_mlp_model.h5")
             if os.path.exists(keras_path):
+                logger.info("Found Keras model file")
                 self.keras_model = keras.models.load_model(keras_path)
                 self.has_keras_model = True
-                logger.info("Loaded Keras model")
+                logger.info("Successfully loaded Keras model")
             else:
                 self.has_keras_model = False
                 logger.warning(f"Keras model not found at {keras_path}")
 
             # Load preprocessor
-            preprocessor_path = os.path.join("data/processed/preprocessor.joblib")
             if os.path.exists(preprocessor_path):
+                logger.info("Found preprocessor file")
                 self.preprocessor = joblib.load(preprocessor_path)
-                logger.info("Loaded preprocessor")
+                logger.info("Successfully loaded preprocessor")
             else:
                 logger.warning(f"Preprocessor not found at {preprocessor_path}")
+                self.preprocessor = None
 
         except Exception as e:
-            logger.error(f"Error loading models: {e}")
+            logger.error(f"Error loading models: {str(e)}", exc_info=True)
             raise
 
     def preprocess_input(self, patient_data):
@@ -312,7 +236,8 @@ class HeartDiseasePredictor:
             and interpretation
         """
         # Check cache first if enabled
-        if use_cache and CACHE_ENABLED:
+        # Check cache first if enabled
+        if use_cache and self.cache.enabled:
             # Try to get from cache
             cached_result = self.cache.get(patient_data, model)
             if cached_result is not None:
@@ -490,9 +415,9 @@ class HeartDiseasePredictor:
                 results["model_used"] = model_used
 
                 # Cache the result if we have a valid prediction and caching is enabled
-                if use_cache and CACHE_ENABLED and model_used is not None:
+                # Cache the result if we have a valid prediction and caching is enabled
+                if use_cache and self.cache.enabled and model_used is not None:
                     self.cache.put(patient_data, model, results)
-
             return results
 
         except Exception as e:
@@ -523,3 +448,45 @@ class HeartDiseasePredictor:
         """
         self.cache.clear()
         return {"status": "success", "message": "Cache cleared successfully"}
+
+    def configure_cache(self, enabled: bool, max_size: int, ttl: int) -> None:
+        """Configure the prediction cache.
+
+        Args:
+            enabled (bool): Whether to enable the cache
+            max_size (int): Maximum number of items in cache
+            ttl (int): Time to live in seconds
+        """
+        global CACHE_ENABLED
+        CACHE_ENABLED = enabled
+        self.cache.enabled = enabled
+        self.cache.max_size = max_size
+        self.cache.ttl = ttl
+
+        # Clear existing cache
+        self.cache.clear()
+
+        # Update cache parameters
+        self.cache.max_size = max_size
+        self.cache.ttl = ttl
+
+        # Create new cache with updated settings
+        from functools import lru_cache
+
+        @lru_cache(maxsize=max_size)
+        def cached_predict(data_key):
+            return self._make_prediction(data_key)
+
+        # Create _make_prediction method if it doesn't exist
+        if not hasattr(self, "_make_prediction"):
+
+            def _make_prediction(data_key):
+                # Convert the key back to original data format and make prediction
+                # This is a simplification, actual implementation depends on how
+                # data_key represents the input data
+                data = json.loads(data_key) if isinstance(data_key, str) else data_key
+                return self.predict(data, use_cache=False)
+
+            self._make_prediction = _make_prediction
+
+        self.cached_predict = cached_predict if enabled else self._make_prediction

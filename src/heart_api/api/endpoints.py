@@ -9,9 +9,10 @@ from typing import List, Optional
 # Third-party imports
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
+from pydantic import BaseModel, Field
 
 # Local application imports
-from src.heart_api.core import (
+from heart_api.core import (
     BATCH_SIZE,
     MAX_WORKERS,
     PERFORMANCE_LOGGING,
@@ -20,18 +21,50 @@ from src.heart_api.core import (
     model_predictor,
     thread_pool,
 )
-from src.heart_api.models import BatchPredictionResponse, PatientData, PredictionResponse
+from heart_api.models import BatchPredictionResponse, PatientData, PredictionResponse
 
 # Initialize logger and router
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Store the server start time for uptime
-server_start_time = time.time()
+SERVER_START_TIME = time.time()
 
 # Setup authentication schemes
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+class AuthenticationError(HTTPException):
+    def __init__(self, detail: str = "Invalid authentication credentials"):
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def validate_batch_request(data: List[dict]):
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Batch request cannot be empty"
+        )
+    if len(data) > 100:  # example limit
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Batch size exceeds maximum limit of 100",
+        )
+
+
+async def verify_api_key(api_key: str = Depends(api_key_scheme)):
+    """Verify API key."""
+    if not auth_settings.enabled:
+        return api_key
+    if not api_key:
+        raise AuthenticationError("API key is required")
+    if not auth_handler.verify_authentication(api_key):
+        raise AuthenticationError("Invalid API key")
+    return api_key
 
 
 async def verify_authentication(
@@ -47,17 +80,75 @@ async def verify_authentication(
     if path in auth_settings.public_endpoints:
         return True
 
-    if api_key and await auth_handler.verify_api_key(api_key):
+    # Check API key first
+    if api_key and auth_handler.verify_authentication(api_key):
         return True
 
+    # Then check bearer token
     if token and await auth_handler.verify_token(token):
         return True
 
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    raise AuthenticationError("Could not validate credentials")
+
+
+def get_risk_level(probability):
+    """Determine risk level based on probability."""
+    if probability < 0.3:
+        return "LOW"
+    elif probability < 0.6:
+        return "MODERATE"
+    else:
+        return "HIGH"
+
+
+def create_error_response(error_message):
+    """Create a standardized error response."""
+    return {
+        "prediction": 0,
+        "probability": 0.0,
+        "risk_level": "ERROR",
+        "interpretation": f"Error: {error_message}",
+        "model_used": None,
+    }
+
+
+def process_prediction_result(prediction_result):
+    """Process a prediction result into a standardized format."""
+    # Check for errors
+    if "error" in prediction_result:
+        return create_error_response(prediction_result["error"])
+
+    # Get model information
+    model_used = prediction_result.get("model_used")
+    if not model_used:
+        logger.error("No model_used field in prediction result")
+        return create_error_response("No model available for prediction")
+
+    # Get prediction and probability based on model used
+    prediction = None
+    probability = None
+
+    if model_used == "ensemble" and "ensemble_predictions" in prediction_result:
+        prediction = prediction_result["ensemble_predictions"][0]
+        probability = prediction_result.get("ensemble_probabilities", [0.5])[0]
+    elif model_used == "sklearn_mlp" and "sklearn_predictions" in prediction_result:
+        prediction = prediction_result["sklearn_predictions"][0]
+        probability = prediction_result.get("sklearn_probabilities", [0.5])[0]
+    elif model_used == "keras_mlp" and "keras_predictions" in prediction_result:
+        prediction = prediction_result["keras_predictions"][0]
+        probability = prediction_result.get("keras_probabilities", [0.5])[0]
+    else:
+        logger.error(f"Missing prediction data for model {model_used}")
+        return create_error_response("No prediction data available")
+
+    # Create response
+    return {
+        "prediction": int(prediction),
+        "probability": float(probability),
+        "risk_level": get_risk_level(float(probability)),
+        "interpretation": prediction_result.get("interpretation", "No interpretation available"),
+        "model_used": model_used,
+    }
 
 
 def process_patient_chunk(patients_chunk, model_name=None):
@@ -75,76 +166,13 @@ def process_patient_chunk(patients_chunk, model_name=None):
                 use_cache=True,
             )
 
-            if "error" in prediction_result:
-                chunk_results.append(
-                    {
-                        "prediction": 0,
-                        "probability": 0.0,
-                        "risk_level": "ERROR",
-                        "interpretation": f"Error: {prediction_result['error']}",
-                        "model_used": None,
-                    }
-                )
-                continue
-
-            # Get prediction results
-            prediction = None
-            probability = None
-            model_used = prediction_result.get("model_used")
-
-            if model_used and model_used in prediction_result:
-                prediction = prediction_result[f"{model_used}_predictions"][0]
-                probability = prediction_result.get(f"{model_used}_probabilities", [None])[0]
-
-            # Handle missing results
-            if prediction is None or model_used is None:
-                chunk_results.append(
-                    {
-                        "prediction": 0,
-                        "probability": 0.0,
-                        "risk_level": "ERROR",
-                        "interpretation": "No predictions available",
-                        "model_used": None,
-                    }
-                )
-                continue
-
-            # Use default probability if missing
-            if probability is None:
-                probability = 0.5
-
-            # Determine risk level
-            if probability < 0.3:
-                risk_level = "LOW"
-            elif probability < 0.6:
-                risk_level = "MODERATE"
-            else:
-                risk_level = "HIGH"
-
-            # Get interpretation
-            interpretation = prediction_result.get("interpretation")
-
-            chunk_results.append(
-                {
-                    "prediction": int(prediction),
-                    "probability": float(probability),
-                    "risk_level": risk_level,
-                    "interpretation": interpretation,
-                    "model_used": model_used,
-                }
-            )
+            # Process the prediction result
+            result = process_prediction_result(prediction_result)
+            chunk_results.append(result)
 
         except Exception as e:
             logger.error(f"Error processing patient: {str(e)}")
-            chunk_results.append(
-                {
-                    "prediction": 0,
-                    "probability": 0.0,
-                    "risk_level": "ERROR",
-                    "interpretation": f"Error: {str(e)}",
-                    "model_used": None,
-                }
-            )
+            chunk_results.append(create_error_response(str(e)))
 
     return chunk_results
 
@@ -196,8 +224,12 @@ async def process_batch_optimized(patients_data, model_name=None):
 
 
 @router.post("/auth/token")
-async def get_access_token():
+async def get_access_token(api_key: str = Depends(api_key_scheme)):
     """Get an access token for API authentication."""
+    if not auth_settings.enabled:
+        return auth_handler.create_access_token()
+    if not api_key or not auth_handler.verify_authentication(api_key):
+        raise AuthenticationError("Invalid API key")
     return auth_handler.create_access_token()
 
 
@@ -209,12 +241,26 @@ async def health_check():
 
 @router.post("/predict", response_model=PredictionResponse)
 async def predict(
+    request: Request,
     patient_data: PatientData,
     model: str = None,
     authenticated: bool = Depends(verify_authentication),
 ):
     """Predict heart disease risk for a single patient."""
+    logger.info("Starting prediction request")
     try:
+        # Debug model predictor state
+        if not hasattr(request.app.state, "model_predictor"):
+            logger.error("Model predictor not found in app state")
+            raise AttributeError("Model predictor not found in app state")
+
+        model_predictor = request.app.state.model_predictor
+        logger.info(
+            f"Model predictor loaded: "
+            f"sklearn={model_predictor.has_sklearn_model}, "
+            f"keras={model_predictor.has_keras_model}"
+        )
+
         # Convert to dictionary
         patient_dict = (
             patient_data.model_dump()
@@ -223,7 +269,7 @@ async def predict(
         )
 
         # Make prediction
-        prediction_result = model_predictor.predict(
+        result = model_predictor.predict(
             patient_dict,
             return_probabilities=True,
             return_interpretation=True,
@@ -231,36 +277,25 @@ async def predict(
             use_cache=True,
         )
 
-        if "error" in prediction_result:
-            raise HTTPException(status_code=500, detail=prediction_result["error"])
+        # Process the prediction result
+        if "error" in result:
+            logger.error(f"Prediction error: {result['error']}")
+            raise HTTPException(status_code=500, detail=f"Error: {result['error']}")
 
-        # Process prediction results
-        model_used = prediction_result.get("model_used")
-        if not model_used:
-            raise HTTPException(status_code=500, detail="No model available for prediction")
-
-        # Get prediction and probability
-        prediction = prediction_result[f"{model_used}_predictions"][0]
-        probability = prediction_result.get(f"{model_used}_probabilities", [0.5])[0]
-
-        # Determine risk level
-        if probability < 0.3:
-            risk_level = "LOW"
-        elif probability < 0.6:
-            risk_level = "MODERATE"
-        else:
-            risk_level = "HIGH"
+        # Map the results to the expected format
+        processed_result = process_prediction_result(result)
+        logger.info(f"Prediction response prepared: {processed_result}")
 
         return {
-            "prediction": int(prediction),
-            "probability": float(probability),
-            "risk_level": risk_level,
-            "interpretation": prediction_result.get("interpretation"),
-            "model_used": model_used,
+            "prediction": processed_result["prediction"],
+            "probability": processed_result["probability"],
+            "interpretation": processed_result["interpretation"],
+            "risk_level": processed_result["risk_level"],
         }
 
-    except HTTPException:
-        raise
+    except AttributeError as e:
+        logger.error(f"State error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server configuration error: {str(e)}")
     except Exception as e:
         logger.error(f"Error making prediction: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
@@ -272,27 +307,42 @@ async def predict_batch(
     model: str = None,
     authenticated: bool = Depends(verify_authentication),
 ):
-    """Predict heart disease risk for multiple patients."""
+    """
+    Predict heart disease risk for multiple patients in a batch.
+
+    This endpoint processes multiple patient records in parallel for improved performance.
+    It returns predictions along with performance metrics.
+    """
+    logger.info(f"Received batch prediction request for {len(patients_data)} patients")
+
     try:
-        if not patients_data:
-            raise ValueError("No patient data provided")
+        # Validate the batch request
+        validate_batch_request(
+            [p.model_dump() if hasattr(p, "model_dump") else p.dict() for p in patients_data]
+        )
 
-        results, performance_metrics = await process_batch_optimized(patients_data, model)
+        # Process batch with optimized method
+        predictions, performance_metrics = await process_batch_optimized(patients_data, model)
 
-        if not results:
-            raise ValueError("No valid predictions could be made")
-
-        response = {"predictions": results}
+        # Log performance metrics if enabled
         if PERFORMANCE_LOGGING:
-            response["performance_metrics"] = performance_metrics
+            logger.info(
+                f"Batch prediction completed: {len(predictions)} patients processed in "
+                f"{performance_metrics['processing_time_seconds']:.2f}s "
+                f"({performance_metrics['throughput_patients_per_second']:.2f} patients/sec)"
+            )
 
-        return response
+        return {"predictions": predictions, "performance_metrics": performance_metrics}
 
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         logger.error(f"Error making batch predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error making batch predictions: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing batch prediction: {str(e)}",
+        )
 
 
 @router.get("/models/info")
@@ -316,19 +366,86 @@ async def get_model_info(authenticated: bool = Depends(verify_authentication)):
 
 
 @router.get("/version")
-def get_version():
-    return {
-        "api_version": "1.0.0",
-        "model_version": "2024-04-01",
-        "environment": os.getenv("ENVIRONMENT", "dev"),
+async def get_version():
+    """Get API and model versions."""
+    data = {
+        "api_version": os.getenv("API_VERSION", "1.0.0"),
+        "model_version": model_predictor.model_version
+        if hasattr(model_predictor, "model_version")
+        else "unknown",
+        "environment": os.getenv("ENVIRONMENT", "development"),
     }
+    return data
 
 
 @router.get("/metrics")
-def get_metrics():
-    uptime_seconds = round(time.time() - server_start_time)
-    return {
-        "uptime_seconds": uptime_seconds,
-        "server_start": datetime.fromtimestamp(server_start_time).isoformat(),
-        "status": "running",
+async def get_metrics():
+    """Get API metrics."""
+    data = {
+        "uptime_seconds": int(time.time() - SERVER_START_TIME),
+        "server_start": datetime.fromtimestamp(SERVER_START_TIME).isoformat(),
+        "status": "ok",
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "total_predictions": getattr(model_predictor, "total_predictions", 0),
     }
+    return data
+
+
+class CacheConfig(BaseModel):
+    enabled: bool = Field(..., description="Whether the cache is enabled")
+    max_size: int = Field(..., description="Maximum number of items in cache")
+    ttl: int = Field(..., description="Time to live in seconds")
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """Get cache statistics."""
+    try:
+        return model_predictor.get_cache_stats()
+    except Exception as e:
+        logger.error(f"Error getting cache stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get cache stats: {str(e)}",
+        )
+
+
+@router.post("/cache/config")
+async def configure_cache(config: CacheConfig):
+    """Configure cache settings."""
+    try:
+        if config.max_size < 1:
+            raise ValueError("Cache max_size must be greater than 0")
+        if config.ttl < 0:
+            raise ValueError("Cache TTL must be non-negative")
+
+        model_predictor.configure_cache(
+            enabled=config.enabled, max_size=config.max_size, ttl=config.ttl
+        )
+        return {
+            "status": "ok",
+            "message": "Cache configured successfully",
+            "config": {"enabled": config.enabled, "max_size": config.max_size, "ttl": config.ttl},
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error configuring cache: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to configure cache: {str(e)}",
+        )
+
+
+@router.post("/cache/clear")
+async def clear_cache():
+    """Clear the prediction cache."""
+    try:
+        model_predictor.clear_cache()
+        return {"status": "ok", "message": "Cache cleared successfully"}
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear cache: {str(e)}",
+        )

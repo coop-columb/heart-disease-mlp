@@ -4,8 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from src.heart_api.api.endpoints import router as api_router
-from src.heart_api.core import config, logger
+from heart_api.api.endpoints import router as api_router
+from heart_api.core import config, logger
+from models.predict_model import HeartDiseasePredictor
+
+# Initialize the model predictor
+model_predictor = HeartDiseasePredictor()
 
 # Create FastAPI app
 app = FastAPI(
@@ -13,6 +17,20 @@ app = FastAPI(
     description="API for predicting heart disease risk based on clinical parameters",
     version="1.0.0",
 )
+
+
+@app.get("/")
+def root():
+    """Root endpoint."""
+    return """<!DOCTYPE html>
+<html>
+    <head><title>Heart Disease Prediction</title></head>
+    <body>
+        <h1>Heart Disease Prediction</h1>
+        <p>API for predicting heart disease risk based on clinical parameters</p>
+    </body>
+</html>"""
+
 
 # Add CORS middleware
 app.add_middleware(
@@ -41,4 +59,4 @@ if __name__ == "__main__":
     port = config["api"]["port"]
 
     logger.info(f"Starting Heart Disease Prediction API on {host}:{port}")
-    uvicorn.run("src.heart_api.main:app", host=host, port=port, reload=True)
+    uvicorn.run("heart_api.main:app", host=host, port=port, reload=True)
