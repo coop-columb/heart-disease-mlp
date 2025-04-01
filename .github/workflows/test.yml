@@ -37,4 +37,22 @@ jobs:
       - name: Run tests with coverage
         run: |
           . .venv/bin/activate
+          pytest --cov=src --cov-report=term-missing --cov-report=xml
+
+
+      - name: Check formatting with black
+        run: |
+          . .venv/bin/activate
+          black --check src/ tests/
+
+      - name: Run tests with coverage
+        run: |
+          . .venv/bin/activate
           pytest --cov=src --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}  # Only needed if repo is private
+          files: coverage.xml
+          fail_ci_if_error: true
