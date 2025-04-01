@@ -1,30 +1,145 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PatientData(BaseModel):
     """Patient clinical data for heart disease prediction."""
 
-    age: int = Field(..., description="Age in years")
-    sex: int = Field(..., description="Gender (0=female, 1=male)")
-    cp: int = Field(..., description="Chest pain type (1-4)")
-    trestbps: int = Field(..., description="Resting blood pressure (mm Hg)")
-    chol: int = Field(..., description="Serum cholesterol (mg/dl)")
-    fbs: int = Field(
-        ..., description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)"
+    age: int = Field(
+        ...,
+        description="Age in years",
+        ge=18,
+        le=100,
+        error_messages={
+            "ge": "Age must be at least 18 years",
+            "le": "Age must be at most 100 years",
+        },
     )
-    restecg: int = Field(..., description="Resting ECG results (0-2)")
-    thalach: int = Field(..., description="Maximum heart rate achieved")
-    exang: int = Field(..., description="Exercise induced angina (0=no, 1=yes)")
-    oldpeak: float = Field(..., description="ST depression induced by exercise")
-    slope: int = Field(..., description="Slope of the peak exercise ST segment (1-3)")
+    sex: int = Field(
+        ...,
+        description="Gender (0=female, 1=male)",
+        ge=0,
+        le=1,
+        error_messages={
+            "ge": "Sex must be 0 (female) or 1 (male)",
+            "le": "Sex must be 0 (female) or 1 (male)",
+        },
+    )
+    cp: int = Field(
+        ...,
+        description="Chest pain type (1-4)",
+        ge=1,
+        le=4,
+        error_messages={
+            "ge": "Chest pain type must be at least 1",
+            "le": "Chest pain type must be at most 4",
+        },
+    )
+    trestbps: int = Field(
+        ...,
+        description="Resting blood pressure (mm Hg)",
+        ge=60,
+        le=300,
+        error_messages={
+            "ge": "Resting blood pressure must be at least 60 mm Hg",
+            "le": "Resting blood pressure must be at most 300 mm Hg",
+        },
+    )
+    chol: int = Field(
+        ...,
+        description="Serum cholesterol (mg/dl)",
+        ge=100,
+        le=600,
+        error_messages={
+            "ge": "Serum cholesterol must be at least 100 mg/dl",
+            "le": "Serum cholesterol must be at most 600 mg/dl",
+        },
+    )
+    fbs: int = Field(
+        ...,
+        description="Fasting blood sugar > 120 mg/dl (0=false, 1=true)",
+        ge=0,
+        le=1,
+        error_messages={
+            "ge": "Fasting blood sugar must be 0 (false) or 1 (true)",
+            "le": "Fasting blood sugar must be 0 (false) or 1 (true)",
+        },
+    )
+    restecg: int = Field(
+        ...,
+        description="Resting ECG results (0-2)",
+        ge=0,
+        le=2,
+        error_messages={
+            "ge": "Resting ECG result must be between 0 and 2",
+            "le": "Resting ECG result must be between 0 and 2",
+        },
+    )
+    thalach: int = Field(
+        ...,
+        description="Maximum heart rate achieved",
+        ge=60,
+        le=220,
+        error_messages={
+            "ge": "Maximum heart rate must be at least 60 bpm",
+            "le": "Maximum heart rate must be at most 220 bpm",
+        },
+    )
+    exang: int = Field(
+        ...,
+        description="Exercise induced angina (0=no, 1=yes)",
+        ge=0,
+        le=1,
+        error_messages={
+            "ge": "Exercise induced angina must be 0 (no) or 1 (yes)",
+            "le": "Exercise induced angina must be 0 (no) or 1 (yes)",
+        },
+    )
+    oldpeak: float = Field(
+        ...,
+        description="ST depression induced by exercise",
+        ge=0.0,
+        le=10.0,
+        error_messages={
+            "ge": "ST depression must be at least 0.0",
+            "le": "ST depression must be at most 10.0",
+        },
+    )
+    slope: int = Field(
+        ...,
+        description="Slope of the peak exercise ST segment (1-3)",
+        ge=1,
+        le=3,
+        error_messages={
+            "ge": "Slope must be between 1 and 3",
+            "le": "Slope must be between 1 and 3",
+        },
+    )
     ca: int = Field(
-        ..., description="Number of major vessels colored by fluoroscopy (0-3)"
+        ...,
+        description="Number of major vessels colored by fluoroscopy (0-3)",
+        ge=0,
+        le=3,
+        error_messages={
+            "ge": "Number of major vessels must be between 0 and 3",
+            "le": "Number of major vessels must be between 0 and 3",
+        },
     )
     thal: int = Field(
-        ..., description="Thalassemia (3=normal, 6=fixed defect, 7=reversible defect)"
+        ...,
+        description=("Thalassemia " "(3=normal, 6=fixed defect, 7=reversible defect)"),
     )
+
+    @field_validator("thal")
+    def validate_thal(cls, value):
+        valid_values = [3, 6, 7]
+        if value not in valid_values:
+            raise ValueError(
+                f"Thalassemia value must be one of {valid_values} "
+                "(3=normal, 6=fixed defect, 7=reversible defect)"
+            )
+        return value
 
     model_config = {
         "json_schema_extra": {
