@@ -80,8 +80,8 @@ The Heart Disease Prediction system employs a layered architecture that separate
 - Manage prediction caching
 
 **Key Components**:
-- `api/app.py`: FastAPI application with endpoint definitions
-- `/api/static/*`: Static files for the web UI
+- `src/api/app.py`: FastAPI application with endpoint definitions
+- `src/api/static/*`: Static files for the web UI
 
 **Endpoints**:
 - `/predict`: Single patient prediction
