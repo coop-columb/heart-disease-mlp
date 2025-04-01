@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api.endpoints import router as api_router
-from .core import config, logger
+from src.heart_api.api.endpoints import router as api_router
+from src.heart_api.core import config, logger
 
 # Create FastAPI app
 app = FastAPI(
@@ -41,4 +41,4 @@ if __name__ == "__main__":
     port = config["api"]["port"]
 
     logger.info(f"Starting Heart Disease Prediction API on {host}:{port}")
-    uvicorn.run("heart_api.main:app", host=host, port=port, reload=True)
+    uvicorn.run("src.heart_api.main:app", host=host, port=port, reload=True)

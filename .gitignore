@@ -123,3 +123,7 @@ static/
 build/
 dist/
 *.egg-info
+requirements-dev.txt
+
+# Local dev-only scripts
+scripts/dev/

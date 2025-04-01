@@ -19,7 +19,7 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc g++ \
+    && apt-get install -y --no-install-recommends gcc g++ git \
     && pip install --no-cache-dir -r requirements.txt \
     && apt-get purge -y --auto-remove gcc g++ \
     && apt-get clean \
