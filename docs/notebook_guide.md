@@ -96,11 +96,13 @@ Significant work remains to be done:
 If you need to use the notebooks in their current state:
 
 1. Install all dependencies manually:
+
    ```bash
    pip install pandas numpy scikit-learn tensorflow matplotlib seaborn requests tabulate
    ```
 
 2. Verify basic functionality with the test notebook:
+
    ```bash
    jupyter nbconvert --to html --execute notebooks/test_notebook.ipynb
    ```
@@ -110,6 +112,7 @@ If you need to use the notebooks in their current state:
 ## Reporting Issues
 
 When encountering notebook problems:
+
 1. Document the exact error message
 2. Note which cell failed
 3. List your environment details (Python version, OS, etc.)
