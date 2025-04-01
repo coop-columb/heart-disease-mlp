@@ -112,3 +112,14 @@ ehthumbs.db
 *.pid
 *.pid.lock
 .aider.*
+
+# Frontend build artifacts
+labextensions/
+nbextensions/
+nbconvert/
+themes/
+man/
+static/
+build/
+dist/
+*.egg-info
