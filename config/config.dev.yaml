@@ -78,14 +78,17 @@ api:
 
   # Development-specific authentication settings
   auth:
-    enabled: false     # Disabled by default for easier development
+    enabled: true
     secret_key: 'dev_secret_key_1234567890'
     algorithm: 'HS256'
-    access_token_expire_minutes: 60  # Longer expiry for development convenience
+    access_token_expire_minutes: 60
     token_url: '/auth/token'
+    token_includes_expires_in: true
 
-    # Development API keys
+    # Test API keys
     api_keys:
+      - key: 'test_api_key_1'
+        name: 'Test API Key 1'
       - key: 'dev_api_key'
         name: 'Development API Key'
 

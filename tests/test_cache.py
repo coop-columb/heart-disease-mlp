@@ -7,9 +7,9 @@ import unittest
 from unittest import mock
 
 import pytest
-from api.app import app
 from fastapi.testclient import TestClient
 
+from src.heart_api.main import app
 from src.models.predict_model import PredictionCache
 
 

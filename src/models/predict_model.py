@@ -278,13 +278,16 @@ class HeartDiseasePredictor:
         else:
             patient_df = patient_data
 
+        # Convert to numpy array to remove feature names before preprocessing
+        input_data = patient_df.to_numpy()
+
         # Apply preprocessor if available
         if self.preprocessor is not None:
-            processed_data = self.preprocessor.transform(patient_df)
+            processed_data = self.preprocessor.transform(input_data)
             return processed_data
         else:
             logger.warning("Preprocessor not available. Using raw input data.")
-            return patient_df.values
+            return input_data
 
     def predict(
         self,
@@ -389,9 +392,12 @@ class HeartDiseasePredictor:
                     logger.warning(f"Error making scikit-learn predictions: {e}")
             elif model == "keras" and self.keras_model is not None:
                 try:
-                    # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
-                    keras_pred_raw = self.keras_model.predict(X)
-                    keras_probas = np.reshape(keras_pred_raw, -1)  # Safer than ravel()
+                    # Get predictions with proper tensor conversion
+                    keras_pred_raw = self.keras_model.predict(X, verbose=0)
+                    keras_probas = np.asarray(keras_pred_raw).reshape(-1)
+                    # Ensure we use numpy array operations
+                    if keras_probas.size == 1:
+                        keras_probas = np.array([float(keras_probas[0])])
                     keras_preds = (keras_probas >= 0.5).astype(int)
                     results["keras_predictions"] = keras_preds
                     if return_probabilities:
@@ -417,16 +423,18 @@ class HeartDiseasePredictor:
                 # Try Keras
                 if self.keras_model is not None:
                     try:
-                        # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
-                        keras_pred_raw = self.keras_model.predict(X)
-                        keras_probas = np.reshape(
-                            keras_pred_raw, -1
-                        )  # Safer than ravel()
+                        # Get predictions with proper tensor conversion
+                        keras_pred_raw = self.keras_model.predict(X, verbose=0)
+                        keras_probas = np.asarray(keras_pred_raw).reshape(-1)
+                        # Ensure we use numpy array operations
+                        if keras_probas.size == 1:
+                            keras_probas = np.array([float(keras_probas[0])])
                         keras_preds = (keras_probas >= 0.5).astype(int)
                         results["keras_predictions"] = keras_preds
                         if return_probabilities:
                             results["keras_probabilities"] = keras_probas
                         keras_available = True
+                        model_used = "keras_mlp"
                     except Exception as e:
                         logger.warning(f"Error making Keras predictions: {e}")
 

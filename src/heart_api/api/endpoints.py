@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 
-from src.heart_api.main import (BATCH_SIZE, MAX_WORKERS, PERFORMANCE_LOGGING,
+from src.heart_api.core import (BATCH_SIZE, MAX_WORKERS, PERFORMANCE_LOGGING,
                                 auth_handler, auth_settings, model_predictor,
                                 thread_pool)
 from src.heart_api.models import (BatchPredictionResponse, PatientData,

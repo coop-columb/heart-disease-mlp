@@ -397,18 +397,27 @@ def evaluate_keras_mlp(
     """
     logger.info("Evaluating Keras MLP model on test data")
 
-    # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
-    pred_raw = model.predict(X_test)
-    y_pred_proba = np.reshape(pred_raw, -1)  # Safer than flatten() or ravel()
-    y_pred = (y_pred_proba > 0.5).astype(int)
+    # Get predictions with proper tensor conversion
+    pred_raw = model.predict(X_test, verbose=0)
+    y_pred_proba = np.asarray(pred_raw).reshape(-1)
+    if y_pred_proba.size == 1:
+        y_pred_proba = np.array([float(y_pred_proba[0])])
+    y_pred = (y_pred_proba >= 0.5).astype(int)
+
+    # Convert metrics to float to avoid TensorFlow tensor operations
+    acc = float(accuracy_score(y_test, y_pred))
+    prec = float(precision_score(y_test, y_pred))
+    rec = float(recall_score(y_test, y_pred))
+    f1 = float(f1_score(y_test, y_pred))
+    auc = float(roc_auc_score(y_test, y_pred_proba))
 
     # Calculate metrics
     metrics = {
-        "accuracy": accuracy_score(y_test, y_pred),
-        "precision": precision_score(y_test, y_pred),
-        "recall": recall_score(y_test, y_pred),
-        "f1": f1_score(y_test, y_pred),
-        "roc_auc": roc_auc_score(y_test, y_pred_proba),
+        "accuracy": acc,
+        "precision": prec,
+        "recall": rec,
+        "f1": f1,
+        "roc_auc": auc,
     }
 
     # Log metrics
@@ -436,17 +445,21 @@ def combine_predictions(
     Returns:
         Combined prediction probabilities
     """
+    # Convert to numpy arrays if needed
+    p1 = np.asarray(pred_proba1).reshape(-1)
+    p2 = np.asarray(pred_proba2).reshape(-1)
+
     if method == "mean":
-        return (pred_proba1 + pred_proba2) / 2
+        return (p1 + p2) / 2
     elif method == "max":
-        return np.maximum(pred_proba1, pred_proba2)
+        return np.maximum(p1, p2)
     elif method == "min":
-        return np.minimum(pred_proba1, pred_proba2)
+        return np.minimum(p1, p2)
     elif method == "product":
-        return np.sqrt(pred_proba1 * pred_proba2)  # Geometric mean
+        return np.sqrt(p1 * p2)  # Geometric mean
     elif method == "weighted":
         # Example with fixed weights - could be parameters
-        return 0.4 * pred_proba1 + 0.6 * pred_proba2
+        return 0.4 * p1 + 0.6 * p2
     else:
         raise ValueError(f"Unknown combination method: {method}")
 
@@ -487,7 +500,8 @@ def interpret_prediction(  # noqa: C901
 
             # Make prediction
             if isinstance(model, keras.Model):
-                probability = model.predict(X)[0][0]
+                pred_raw = model.predict(X, verbose=0)
+                probability = float(np.asarray(pred_raw).reshape(-1)[0])
             else:
                 probability = model.predict_proba(X)[0][1]
         except Exception as e:

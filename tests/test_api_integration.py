@@ -7,8 +7,9 @@ from unittest import mock
 
 # pytest is required for fixture usage, even though not explicitly referenced
 import pytest  # noqa: F401
-from api.app import app
 from fastapi.testclient import TestClient
+
+from src.heart_api.main import app
 
 
 def test_health_and_model_info(client):
@@ -77,7 +78,7 @@ def test_missing_model_fallback(sample_patient_data):
         predictor_mock.predict = mock_predict
 
         # Create a test client with the mock
-        with mock.patch("api.app.model_predictor", predictor_mock):
+        with mock.patch("src.heart_api.main.model_predictor", predictor_mock):
             client = TestClient(app)
 
             # Prediction should work even with only keras model

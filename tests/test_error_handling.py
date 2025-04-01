@@ -16,7 +16,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
 sys.path.insert(0, project_root)
 
-from api.app import app  # noqa: E402
+from src.heart_api.main import app  # noqa: E402
 
 
 @pytest.fixture
@@ -95,7 +95,7 @@ def test_nonexistent_model(client, sample_patient_data):
 def test_preprocessor_missing(client, sample_patient_data):
     """Test API's behavior when preprocessor is missing."""
     # Mock the HeartDiseasePredictor with missing preprocessor
-    with patch("api.app.model_predictor") as mock_predictor:
+    with patch("src.heart_api.main.model_predictor") as mock_predictor:
         # Configure mock to simulate missing preprocessor
         mock_predictor.preprocessor = None
         mock_predictor.predict.return_value = {"error": "Preprocessor not available"}
@@ -176,7 +176,7 @@ def test_malformed_json(client):
 
 def test_prediction_none_handling(client, sample_patient_data):
     """Test handling of None prediction values."""
-    with patch("api.app.model_predictor.predict") as mock_predict:
+    with patch("src.heart_api.main.model_predictor.predict") as mock_predict:
         # Return a result with None prediction
         mock_predict.return_value = {
             "keras_predictions": [None],
