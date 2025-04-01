@@ -127,3 +127,11 @@ requirements-dev.txt
 
 # Local dev-only scripts
 scripts/dev/
+
+# Ignore Aider and AI assistant artifacts
+.aider*
+*.chat.history.md
+*.input.history
+
+# Ignore logs generated in dev
+logs/*.log
