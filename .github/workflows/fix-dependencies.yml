@@ -50,9 +50,3 @@ jobs:
           - Still maintain minimum version requirements for security and functionality
 
           The specific versions are replaced with ">=" version specifiers to ensure backward compatibility while allowing newer versions to be used.
-
-          ### Test Results
-
-          The PR has been tested with the new flexible dependencies and passes all the core tests.
-        branch: fix/flexible-dependencies
-        base: main
