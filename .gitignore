@@ -111,3 +111,4 @@ ehthumbs.db
 # Docker
 *.pid
 *.pid.lock
+.aider.*
