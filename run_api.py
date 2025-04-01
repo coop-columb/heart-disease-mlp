@@ -24,7 +24,7 @@ filtered_path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
 sys.path = filtered_path
 
 # Add the project root first to ensure it takes precedence
-project_root = os.path.abspath(os.path.dirname(__file__))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root in sys.path:
     sys.path.remove(project_root)
 sys.path.insert(0, project_root)
