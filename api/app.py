@@ -21,7 +21,7 @@ filtered_path = [p for p in original_path if "EmotionAdaptiveMusic" not in p]
 sys.path = filtered_path
 
 # Add the project root first to ensure it takes precedence
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root in sys.path:
     sys.path.remove(project_root)
 sys.path.insert(0, project_root)
@@ -49,7 +49,7 @@ try:
     from pydantic import BaseModel, Field
 
     # Import project modules
-    from api.auth import AuthHandler, AuthSettings, Token
+    from .auth import AuthHandler, AuthSettings, Token
     from src.models.predict_model import HeartDiseasePredictor
     from src.utils import load_config
 
