@@ -1,5 +1,5 @@
 # 🫀 Heart Disease Risk API
-
+[![codecov](https://codecov.io/gh/coop-columb/heart-disease-mlp/branch/main/graph/badge.svg)](https://codecov.io/gh/coop-columb/heart-disease-mlp)
 ## 📦 Project Overview
 
 A FastAPI-based ML inference service for heart disease prediction.
