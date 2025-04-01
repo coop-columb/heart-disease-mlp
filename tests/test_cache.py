@@ -7,9 +7,9 @@ import unittest
 from unittest import mock
 
 import pytest
+from api.app import app
 from fastapi.testclient import TestClient
 
-from api.app import app
 from src.models.predict_model import PredictionCache
 
 
@@ -133,7 +133,9 @@ def test_cache_stats_endpoint(client):
 def test_cache_config_endpoint(client):
     """Test the /cache/config endpoint."""
     # Configure cache
-    response = client.post("/cache/config", json={"enabled": True, "max_size": 2000, "ttl": 7200})
+    response = client.post(
+        "/cache/config", json={"enabled": True, "max_size": 2000, "ttl": 7200}
+    )
     assert response.status_code == 200
     data = response.json()
     # Check that configuration was applied

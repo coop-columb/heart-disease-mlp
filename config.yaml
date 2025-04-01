@@ -1,0 +1,20 @@
+api:
+  host: "0.0.0.0"
+  port: 8000
+  batch_size: 50
+  max_workers: 4
+  performance_logging: true
+  caching:
+    enabled: true
+    max_size: 1000
+    ttl: 3600  # 1 hour in seconds
+
+auth:
+  enabled: true
+  token_expire_minutes: 30
+  api_keys:
+    - "dev_api_key"  # Development API key
+  public_endpoints:
+    - "/docs"
+    - "/openapi.json"
+    - "/health"

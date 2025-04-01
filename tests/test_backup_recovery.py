@@ -2,29 +2,25 @@
 Tests for the backup and recovery system.
 
 Note: We need to modify sys.path before importing from scripts
-"""  # noqa: E402
+"""
 
-import json
 import os
-import shutil
 import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# flake8: noqa: E402
+import json
+import shutil
 import tempfile
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
-# Add project root to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from scripts.backup_system import (  # noqa: E402
-    create_backup,
-    get_file_hash,
-    list_backups,
-    prune_backups,
-    restore_backup,
-    update_global_manifest,
-)
+from scripts.backup_system import (create_backup, get_file_hash, list_backups,
+                                   prune_backups, restore_backup,
+                                   update_global_manifest)
 
 
 @pytest.fixture
@@ -104,7 +100,9 @@ def test_get_file_hash(temp_project_root):
     assert len(file_hash) == 32  # MD5 hash has 32 characters
 
 
-@pytest.mark.skip(reason="Test needs to be rewritten to account for changes to backup_system.py")
+@pytest.mark.skip(
+    reason="Test needs to be rewritten to account for changes to backup_system.py"
+)
 def test_create_and_restore_backup(temp_backup_dir, temp_project_root):
     """Test creating and restoring a backup."""
     # Create backup
@@ -126,16 +124,24 @@ def test_create_and_restore_backup(temp_backup_dir, temp_project_root):
         f.write(b"modified processed data")
 
     # Store file hashes before restore
-    modified_model_hash = get_file_hash(temp_project_root / "models" / "test_model.joblib")
-    modified_data_hash = get_file_hash(temp_project_root / "data" / "processed" / "test_data.npz")
+    modified_model_hash = get_file_hash(
+        temp_project_root / "models" / "test_model.joblib"
+    )
+    modified_data_hash = get_file_hash(
+        temp_project_root / "data" / "processed" / "test_data.npz"
+    )
 
     # Restore backup
     success = restore_backup(timestamp)
     assert success
 
     # Verify files were restored
-    restored_model_hash = get_file_hash(temp_project_root / "models" / "test_model.joblib")
-    restored_data_hash = get_file_hash(temp_project_root / "data" / "processed" / "test_data.npz")
+    restored_model_hash = get_file_hash(
+        temp_project_root / "models" / "test_model.joblib"
+    )
+    restored_data_hash = get_file_hash(
+        temp_project_root / "data" / "processed" / "test_data.npz"
+    )
 
     # Verify hashes are different
     assert restored_model_hash != modified_model_hash
@@ -153,7 +159,9 @@ def test_create_and_restore_backup(temp_backup_dir, temp_project_root):
     assert restored_data_data == b"test processed data"
 
 
-@pytest.mark.skip(reason="Test needs to be rewritten to account for changes to backup_system.py")
+@pytest.mark.skip(
+    reason="Test needs to be rewritten to account for changes to backup_system.py"
+)
 def test_list_backups(temp_backup_dir):
     """Test listing backups."""
     # Create a test manifest
@@ -194,7 +202,9 @@ def test_list_backups(temp_backup_dir):
     assert backups[1]["timestamp"] == "20250331_120000"
 
 
-@pytest.mark.skip(reason="Test needs to be rewritten to account for changes to backup_system.py")
+@pytest.mark.skip(
+    reason="Test needs to be rewritten to account for changes to backup_system.py"
+)
 def test_prune_backups(temp_backup_dir, temp_project_root):
     """Test pruning backups."""
     # Create a test manifest with multiple backups
@@ -247,12 +257,9 @@ def test_prune_backups(temp_backup_dir, temp_project_root):
             },
         ]
     }
-
     # Create manifest file
     manifest_file = temp_backup_dir / "manifest.json"
     with open(manifest_file, "w") as f:
-        import json
-
         json.dump(manifest, f)
 
     # Create dummy archive files
@@ -268,11 +275,8 @@ def test_prune_backups(temp_backup_dir, temp_project_root):
 
     # Verify pruning was successful
     assert success
-
     # Reload manifest to see changes
     with open(manifest_file, "r") as f:
-        import json
-
         updated_manifest = json.load(f)
 
     # Verify only 3 backups remain
@@ -287,7 +291,9 @@ def test_prune_backups(temp_backup_dir, temp_project_root):
     assert "20250401_120000" not in timestamps
 
 
-@pytest.mark.skip(reason="Test needs to be rewritten to account for changes to backup_system.py")
+@pytest.mark.skip(
+    reason="Test needs to be rewritten to account for changes to backup_system.py"
+)
 def test_update_global_manifest(temp_backup_dir):
     """Test updating the global manifest."""
     # Create a test manifest
@@ -314,15 +320,15 @@ def test_update_global_manifest(temp_backup_dir):
 
     # Verify global manifest was created
     assert (temp_backup_dir / "manifest.json").exists()
-
     # Load global manifest
     with open(temp_backup_dir / "manifest.json", "r") as f:
-        import json
-
         global_manifest = json.load(f)
 
     # Verify manifest structure
     assert "backups" in global_manifest
     assert len(global_manifest["backups"]) == 1
     assert global_manifest["backups"][0]["timestamp"] == "20250401_120000"
-    assert global_manifest["backups"][0]["archive"] == "backups/backup_20250401_120000.tar.gz"
+    assert (
+        global_manifest["backups"][0]["archive"]
+        == "backups/backup_20250401_120000.tar.gz"
+    )

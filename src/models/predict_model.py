@@ -325,11 +325,20 @@ class HeartDiseasePredictor:
                     model_used = cached_result.get("model_used", "ensemble")
                     probability = None
 
-                    if model_used == "ensemble" and "ensemble_probabilities" in cached_result:
+                    if (
+                        model_used == "ensemble"
+                        and "ensemble_probabilities" in cached_result
+                    ):
                         probability = cached_result["ensemble_probabilities"][0]
-                    elif model_used == "sklearn_mlp" and "sklearn_probabilities" in cached_result:
+                    elif (
+                        model_used == "sklearn_mlp"
+                        and "sklearn_probabilities" in cached_result
+                    ):
                         probability = cached_result["sklearn_probabilities"][0]
-                    elif model_used == "keras_mlp" and "keras_probabilities" in cached_result:
+                    elif (
+                        model_used == "keras_mlp"
+                        and "keras_probabilities" in cached_result
+                    ):
                         probability = cached_result["keras_probabilities"][0]
 
                     if probability is not None:
@@ -346,7 +355,9 @@ class HeartDiseasePredictor:
             if isinstance(patient_data, dict):
                 original_data = patient_data
             else:
-                original_data = patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
+                original_data = (
+                    patient_data.iloc[0].to_dict() if len(patient_data) == 1 else None
+                )
 
             # Preprocess input
             X = self.preprocess_input(patient_data)
@@ -408,7 +419,9 @@ class HeartDiseasePredictor:
                     try:
                         # Get predictions and convert to 1D array properly to avoid TensorFlow warnings
                         keras_pred_raw = self.keras_model.predict(X)
-                        keras_probas = np.reshape(keras_pred_raw, -1)  # Safer than ravel()
+                        keras_probas = np.reshape(
+                            keras_pred_raw, -1
+                        )  # Safer than ravel()
                         keras_preds = (keras_probas >= 0.5).astype(int)
                         results["keras_predictions"] = keras_preds
                         if return_probabilities:
@@ -419,7 +432,11 @@ class HeartDiseasePredictor:
 
             # Use ensemble if both are available and no specific model was requested
             # or ensemble was specifically requested
-            if (model is None or model == "ensemble") and sklearn_available and keras_available:
+            if (
+                (model is None or model == "ensemble")
+                and sklearn_available
+                and keras_available
+            ):
                 try:
                     combined_probas = combine_predictions(
                         sklearn_probas, keras_probas, method="mean"
@@ -474,7 +491,9 @@ class HeartDiseasePredictor:
             if not sklearn_available and not keras_available:
                 results["error"] = "No models available for prediction."
                 if return_interpretation:
-                    results["interpretation"] = "No models available for interpretation."
+                    results[
+                        "interpretation"
+                    ] = "No models available for interpretation."
             else:
                 # Add model_used to results
                 results["model_used"] = model_used
@@ -491,7 +510,9 @@ class HeartDiseasePredictor:
             return {
                 "error": f"Prediction failed: {str(e)}",
                 "interpretation": (
-                    "Unable to make prediction due to an error." if return_interpretation else None
+                    "Unable to make prediction due to an error."
+                    if return_interpretation
+                    else None
                 ),
             }
 

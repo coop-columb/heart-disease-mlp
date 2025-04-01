@@ -9,9 +9,9 @@ from typing import Any, Dict, List, Tuple
 # Standard libraries for data processing and visualization
 import matplotlib.pyplot as plt
 import numpy as np
-
 # Machine learning libraries
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score, roc_auc_score)
 from sklearn.neural_network import MLPClassifier
 from tensorflow import keras
 from tensorflow.keras import callbacks, layers, regularizers  # noqa: F401
@@ -104,7 +104,9 @@ def train_sklearn_mlp(
         "train_auc": roc_auc_score(y_train, y_pred_proba),
     }
 
-    logger.info(f"Train: Acc={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}")
+    logger.info(
+        f"Train: Acc={metrics['train_accuracy']:.4f}, AUC={metrics['train_auc']:.4f}"
+    )
 
     # Validation metrics if validation data is provided
     if X_val is not None and y_val is not None:
@@ -119,7 +121,9 @@ def train_sklearn_mlp(
             "val_auc": roc_auc_score(y_val, y_val_pred_proba),
         }
 
-        logger.info(f"Val: Acc={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}")
+        logger.info(
+            f"Val: Acc={val_metrics['val_accuracy']:.4f}, AUC={val_metrics['val_auc']:.4f}"
+        )
 
     return model
 
@@ -224,7 +228,9 @@ def train_keras_mlp(
     Returns:
         Tuple of (trained model, training history)
     """
-    logger.info(f"Training Keras MLP for up to {epochs} epochs (batch size: {batch_size})")
+    logger.info(
+        f"Training Keras MLP for up to {epochs} epochs (batch size: {batch_size})"
+    )
 
     # Callbacks
     callbacks_list = []
@@ -281,7 +287,9 @@ def train_keras_mlp(
     return model, history
 
 
-def plot_training_history(history: Dict[str, List], save_path: str = None) -> plt.Figure:
+def plot_training_history(
+    history: Dict[str, List], save_path: str = None
+) -> plt.Figure:
     """
     Plot the training history of a Keras model.
 
@@ -500,7 +508,9 @@ def interpret_prediction(  # noqa: C901
     try:
         probability_float = float(probability)
     except (TypeError, ValueError):
-        logger.warning(f"Invalid probability value: {probability}, using default of 0.5")
+        logger.warning(
+            f"Invalid probability value: {probability}, using default of 0.5"
+        )
         probability_float = 0.5  # Fallback to default
 
     # High vs low risk determination
@@ -528,7 +538,9 @@ def interpret_prediction(  # noqa: C901
         if patient_data.get("fbs", 0) == 1:
             risk_factors.append("Fasting blood sugar > 120 mg/dl")
 
-        if patient_data.get("thalach", 999) < 150:  # Use high default to avoid false positive
+        if (
+            patient_data.get("thalach", 999) < 150
+        ):  # Use high default to avoid false positive
             risk_factors.append("Reduced maximum heart rate")
 
         if patient_data.get("exang", 0) == 1:
@@ -540,7 +552,9 @@ def interpret_prediction(  # noqa: C901
             for factor in risk_factors:
                 interpretation.append(f"- {factor}")
         else:
-            interpretation.append("\nNo specific risk factors identified in the provided data.")
+            interpretation.append(
+                "\nNo specific risk factors identified in the provided data."
+            )
 
         # Add recommendations
         interpretation.append("\nRecommendations:")
@@ -561,11 +575,14 @@ def interpret_prediction(  # noqa: C901
             or patient_data.get("chol", 0) > 200
             or patient_data.get("fbs", 0) == 1
             or patient_data.get("thalach", 999) < 150
-            or patient_data.get("exang", 0) == 1  # Use high default to avoid false positive
+            or patient_data.get("exang", 0)
+            == 1  # Use high default to avoid false positive
         )
 
         if has_risk_factors:
-            interpretation.append("\nSome risk factors present, but overall risk is low.")
+            interpretation.append(
+                "\nSome risk factors present, but overall risk is low."
+            )
             interpretation.append("\nRecommendations:")
             interpretation.append("- Continue regular check-ups")
             interpretation.append("- Maintain heart-healthy lifestyle")

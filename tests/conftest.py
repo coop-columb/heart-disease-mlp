@@ -17,7 +17,7 @@ sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
 sys.path.insert(0, project_root)
 
 # Import after path setup
-from api.app import app  # noqa: E402
+from src.heart_api.main import app  # noqa: E402
 from src.models.predict_model import HeartDiseasePredictor  # noqa: E402
 
 

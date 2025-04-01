@@ -55,7 +55,9 @@ def test_predict():
 
     token = get_auth_token() if AUTH_ENABLED else None
     headers = get_auth_headers(token)
-    response = requests.post(f"{BASE_URL}/predict", json=sample_patient, headers=headers)
+    response = requests.post(
+        f"{BASE_URL}/predict", json=sample_patient, headers=headers
+    )
     print(f"Prediction: {response.status_code}")
     print(json.dumps(response.json(), indent=4))
     print()
@@ -98,7 +100,9 @@ def test_batch_predict():
 
     token = get_auth_token() if AUTH_ENABLED else None
     headers = get_auth_headers(token)
-    response = requests.post(f"{BASE_URL}/predict/batch", json=sample_batch, headers=headers)
+    response = requests.post(
+        f"{BASE_URL}/predict/batch", json=sample_batch, headers=headers
+    )
     print(f"Batch prediction: {response.status_code}")
     print(json.dumps(response.json(), indent=4))
     print()
@@ -137,7 +141,9 @@ def test_cache_endpoints():
 
     print("First prediction (cache miss expected):")
     start_time = time.time()
-    response = requests.post(f"{BASE_URL}/predict", json=sample_patient, headers=headers)
+    response = requests.post(
+        f"{BASE_URL}/predict", json=sample_patient, headers=headers
+    )
     first_prediction_time = time.time() - start_time
     print(f"Time: {first_prediction_time:.4f} seconds")
     print(f"Status code: {response.status_code}")
@@ -146,7 +152,9 @@ def test_cache_endpoints():
 
     print("Second prediction (cache hit expected):")
     start_time = time.time()
-    response = requests.post(f"{BASE_URL}/predict", json=sample_patient, headers=headers)
+    response = requests.post(
+        f"{BASE_URL}/predict", json=sample_patient, headers=headers
+    )
     second_prediction_time = time.time() - start_time
     print(f"Time: {second_prediction_time:.4f} seconds")
     print(f"Status code: {response.status_code}")
@@ -173,7 +181,9 @@ def test_cache_endpoints():
     # Update cache configuration
     print("Updating Cache Configuration:")
     new_config = {"enabled": True, "max_size": 2000, "ttl": 7200}
-    response = requests.post(f"{BASE_URL}/cache/config", json=new_config, headers=headers)
+    response = requests.post(
+        f"{BASE_URL}/cache/config", json=new_config, headers=headers
+    )
     print(f"Status code: {response.status_code}")
     print(json.dumps(response.json(), indent=4))
     print()
@@ -275,15 +285,23 @@ def main():
     """Run the tests."""
     global AUTH_ENABLED, API_KEY
 
-    parser = argparse.ArgumentParser(description="Test the Heart Disease Prediction API manually")
-    parser.add_argument(
-        "--test-cache-endpoints", action="store_true", help="Test cache-related endpoints"
+    parser = argparse.ArgumentParser(
+        description="Test the Heart Disease Prediction API manually"
     )
-    parser.add_argument("--test-auth", action="store_true", help="Test authentication endpoints")
+    parser.add_argument(
+        "--test-cache-endpoints",
+        action="store_true",
+        help="Test cache-related endpoints",
+    )
+    parser.add_argument(
+        "--test-auth", action="store_true", help="Test authentication endpoints"
+    )
     parser.add_argument(
         "--api-key", type=str, help="API key to use for authentication", default=API_KEY
     )
-    parser.add_argument("--no-auth", action="store_true", help="Disable authentication for testing")
+    parser.add_argument(
+        "--no-auth", action="store_true", help="Disable authentication for testing"
+    )
     args = parser.parse_args()
 
     # Update authentication settings based on arguments

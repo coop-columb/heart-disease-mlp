@@ -11,7 +11,8 @@ import warnings
 import numpy as np
 import pytest
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             roc_auc_score)
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -57,10 +58,14 @@ def test_model_accuracy_vs_baseline(test_data, predictor):
 
                 metrics["sklearn"] = {
                     "accuracy": accuracy_score(y_test, y_pred_sklearn),
-                    "precision": precision_score(y_test, y_pred_sklearn, zero_division=0),
+                    "precision": precision_score(
+                        y_test, y_pred_sklearn, zero_division=0
+                    ),
                     "recall": recall_score(y_test, y_pred_sklearn, zero_division=0),
                     "roc_auc": (
-                        roc_auc_score(y_test, y_proba_sklearn) if len(set(y_test)) > 1 else 0.5
+                        roc_auc_score(y_test, y_proba_sklearn)
+                        if len(set(y_test)) > 1
+                        else 0.5
                     ),
                 }
 

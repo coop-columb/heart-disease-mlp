@@ -40,8 +40,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Scheduled backup for Heart Disease Prediction system"
     )
-    parser.add_argument("--cloud", action="store_true", help="Upload backup to cloud storage")
-    parser.add_argument("--storage", choices=["s3", "azure", "gcp"], help="Cloud storage provider")
+    parser.add_argument(
+        "--cloud", action="store_true", help="Upload backup to cloud storage"
+    )
+    parser.add_argument(
+        "--storage", choices=["s3", "azure", "gcp"], help="Cloud storage provider"
+    )
     parser.add_argument("--keep", type=int, default=5, help="Number of backups to keep")
     args = parser.parse_args()
 
@@ -59,7 +63,9 @@ def main():
         # Prune old backups
         if args.keep > 0:
             logger.info(f"Pruning old backups, keeping {args.keep} most recent...")
-            success = prune_backups(keep=args.keep, cloud=args.cloud, storage=args.storage)
+            success = prune_backups(
+                keep=args.keep, cloud=args.cloud, storage=args.storage
+            )
             if success:
                 logger.info("Pruning completed successfully")
             else:

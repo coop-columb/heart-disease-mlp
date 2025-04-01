@@ -7,9 +7,8 @@ from unittest import mock
 
 # pytest is required for fixture usage, even though not explicitly referenced
 import pytest  # noqa: F401
-from fastapi.testclient import TestClient
-
 from api.app import app
+from fastapi.testclient import TestClient
 
 
 def test_health_and_model_info(client):

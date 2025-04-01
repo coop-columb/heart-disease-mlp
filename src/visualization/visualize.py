@@ -9,13 +9,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.metrics import (
-    auc,
-    average_precision_score,
-    confusion_matrix,
-    precision_recall_curve,
-    roc_curve,
-)
+from sklearn.metrics import (auc, average_precision_score, confusion_matrix,
+                             precision_recall_curve, roc_curve)
 
 
 def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, figsize=(8, 6)):
@@ -149,7 +144,9 @@ def plot_precision_recall_curve(y_true, y_score, title=None, figsize=(8, 6)):
     return fig
 
 
-def plot_feature_importance(feature_names, importances, title=None, figsize=(10, 8), top_n=None):
+def plot_feature_importance(
+    feature_names, importances, title=None, figsize=(10, 8), top_n=None
+):
     """
     Plot feature importance for a machine learning model.
 
@@ -238,7 +235,9 @@ def plot_prediction_breakdown(
     # Add patient values as text
     for i, feature in enumerate(feature_names):
         if feature in patient_data:
-            ax.text(0, i, f" Value: {patient_data[feature]}", va="center", fontweight="bold")
+            ax.text(
+                0, i, f" Value: {patient_data[feature]}", va="center", fontweight="bold"
+            )
 
     # Set labels
     ax.set_xlabel("Contribution to Prediction")

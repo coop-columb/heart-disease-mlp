@@ -43,7 +43,9 @@ def make_prediction_request() -> Tuple[bool, float]:
     success = False
 
     try:
-        response = requests.post(f"{BASE_URL}/predict", json=get_sample_patient(), timeout=TIMEOUT)
+        response = requests.post(
+            f"{BASE_URL}/predict", json=get_sample_patient(), timeout=TIMEOUT
+        )
         success = response.status_code == 200
     except Exception as e:
         print(f"Request error: {str(e)}")
@@ -60,7 +62,9 @@ def run_batch_prediction_test(batch_size: int = 10) -> Tuple[bool, float]:
     success = False
 
     try:
-        response = requests.post(f"{BASE_URL}/predict/batch", json=patients, timeout=TIMEOUT)
+        response = requests.post(
+            f"{BASE_URL}/predict/batch", json=patients, timeout=TIMEOUT
+        )
         success = response.status_code == 200
     except Exception as e:
         print(f"Batch request error: {str(e)}")
@@ -69,7 +73,9 @@ def run_batch_prediction_test(batch_size: int = 10) -> Tuple[bool, float]:
     return success, time_taken
 
 
-def run_concurrent_tests(num_concurrent: int, num_requests: int) -> List[Tuple[bool, float]]:
+def run_concurrent_tests(
+    num_concurrent: int, num_requests: int
+) -> List[Tuple[bool, float]]:
     """Run concurrent tests and return results."""
     results = []
 
@@ -84,9 +90,13 @@ def run_concurrent_tests(num_concurrent: int, num_requests: int) -> List[Tuple[b
                 success, time_taken = future.result()
                 results.append((success, time_taken))
                 status = "Success" if success else "Failed"
-                print(f"Request {request_num+1}/{num_requests}: {status} in {time_taken:.4f}s")
+                print(
+                    f"Request {request_num+1}/{num_requests}: {status} in {time_taken:.4f}s"
+                )
             except Exception as e:
-                print(f"Request {request_num+1}/{num_requests} generated an exception: {str(e)}")
+                print(
+                    f"Request {request_num+1}/{num_requests} generated an exception: {str(e)}"
+                )
 
     return results
 
@@ -143,7 +153,9 @@ def test_batch_sizes() -> Dict:
             "time": time_taken,
             "time_per_prediction": time_taken / size if size > 0 else 0,
         }
-        print(f"Batch size {size}: {'Success' if success else 'Failed'} in {time_taken:.4f}s")
+        print(
+            f"Batch size {size}: {'Success' if success else 'Failed'} in {time_taken:.4f}s"
+        )
         print(f"Time per prediction: {time_taken/size:.4f}s")
 
     return results
@@ -152,7 +164,9 @@ def test_batch_sizes() -> Dict:
 def main():
     """Run the load test."""
     print("Starting Heart Disease Prediction API load test")
-    print(f"Testing {NUM_REQUESTS} requests with {NUM_CONCURRENT} concurrent connections\n")
+    print(
+        f"Testing {NUM_REQUESTS} requests with {NUM_CONCURRENT} concurrent connections\n"
+    )
 
     # First check if API is up
     health_success, health_time = test_health_endpoint()

@@ -163,7 +163,9 @@ def test_single_bad_item_in_batch(client, sample_patient_data, invalid_patient_d
 def test_malformed_json(client):
     """Test handling of malformed JSON."""
     response = client.post(
-        "/predict", data="this is not valid json", headers={"Content-Type": "application/json"}
+        "/predict",
+        data="this is not valid json",
+        headers={"Content-Type": "application/json"},
     )
 
     # Should return 422 error for JSON parsing issue
@@ -176,7 +178,10 @@ def test_prediction_none_handling(client, sample_patient_data):
     """Test handling of None prediction values."""
     with patch("api.app.model_predictor.predict") as mock_predict:
         # Return a result with None prediction
-        mock_predict.return_value = {"keras_predictions": [None], "keras_probabilities": [None]}
+        mock_predict.return_value = {
+            "keras_predictions": [None],
+            "keras_probabilities": [None],
+        }
 
         response = client.post("/predict", json=sample_patient_data)
 

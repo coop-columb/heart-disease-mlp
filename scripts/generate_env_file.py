@@ -124,7 +124,9 @@ def generate_env_file(env: str, output_dir: str = None) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate environment-specific .env files")
+    parser = argparse.ArgumentParser(
+        description="Generate environment-specific .env files"
+    )
     parser.add_argument(
         "environment",
         choices=["dev", "staging", "prod", "all"],

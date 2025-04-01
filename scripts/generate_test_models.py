@@ -8,7 +8,6 @@ import os
 
 import joblib
 import numpy as np
-
 # tensorflow is imported by keras
 from sklearn.neural_network import MLPClassifier
 from tensorflow import keras

@@ -11,7 +11,9 @@ import requests
 
 # Skip these tests if Docker is not installed
 docker_installed = (
-    subprocess.run(["which", "docker"], stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+    subprocess.run(
+        ["which", "docker"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    ).returncode
     == 0
 )
 
@@ -193,7 +195,9 @@ def test_docker_predict_endpoint(docker_container, sample_patient_data):
 
     try:
         # Check if models are available in the container
-        models_info = requests.get("http://localhost:8000/models/info", timeout=2).json()
+        models_info = requests.get(
+            "http://localhost:8000/models/info", timeout=2
+        ).json()
 
         # Handle either list or dict response format for models_available
         if isinstance(models_info.get("models_available"), list):
@@ -231,7 +235,9 @@ def test_docker_model_persistence(docker_container, sample_patient_data):
 
     try:
         # Check if models are available in the container
-        models_info = requests.get("http://localhost:8000/models/info", timeout=2).json()
+        models_info = requests.get(
+            "http://localhost:8000/models/info", timeout=2
+        ).json()
 
         # Handle either list or dict response format for models_available
         if isinstance(models_info.get("models_available"), list):
@@ -263,6 +269,8 @@ def test_docker_model_persistence(docker_container, sample_patient_data):
 
         # All probabilities should be very close
         prob_diffs = [abs(probabilities[0] - p) for p in probabilities[1:]]
-        assert all(diff < 1e-6 for diff in prob_diffs), "Probabilities are not consistent"
+        assert all(
+            diff < 1e-6 for diff in prob_diffs
+        ), "Probabilities are not consistent"
     except (requests.exceptions.RequestException, AssertionError, AttributeError) as e:
         pytest.skip(f"Docker container API test failed: {str(e)}")

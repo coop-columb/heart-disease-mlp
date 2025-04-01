@@ -275,7 +275,9 @@ def upload_to_s3(archive_path: Path, credentials: Dict) -> bool:
         return True
 
     except ImportError:
-        logger.error("boto3 not installed. Run 'pip install boto3' to enable S3 uploads.")
+        logger.error(
+            "boto3 not installed. Run 'pip install boto3' to enable S3 uploads."
+        )
         return False
     except ClientError as e:
         logger.error(f"S3 upload error: {e}")
@@ -301,7 +303,9 @@ def upload_to_azure(archive_path: Path, credentials: Dict) -> bool:
             return False
 
         # Create Azure client
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
+        )
         container_client = blob_service_client.get_container_client(container_name)
 
         # Upload file
@@ -393,7 +397,9 @@ def download_from_cloud(timestamp: str, storage: str) -> Optional[Path]:
         return None
 
 
-def download_from_s3(timestamp: str, download_path: Path, credentials: Dict) -> Optional[Path]:
+def download_from_s3(
+    timestamp: str, download_path: Path, credentials: Dict
+) -> Optional[Path]:
     """Download backup archive from AWS S3."""
     try:
         import boto3
@@ -423,7 +429,9 @@ def download_from_s3(timestamp: str, download_path: Path, credentials: Dict) -> 
         return download_path
 
     except ImportError:
-        logger.error("boto3 not installed. Run 'pip install boto3' to enable S3 downloads.")
+        logger.error(
+            "boto3 not installed. Run 'pip install boto3' to enable S3 downloads."
+        )
         return None
     except ClientError as e:
         logger.error(f"S3 download error: {e}")
@@ -433,7 +441,9 @@ def download_from_s3(timestamp: str, download_path: Path, credentials: Dict) -> 
         return None
 
 
-def download_from_azure(timestamp: str, download_path: Path, credentials: Dict) -> Optional[Path]:
+def download_from_azure(
+    timestamp: str, download_path: Path, credentials: Dict
+) -> Optional[Path]:
     """Download backup archive from Azure Blob Storage."""
     try:
         from azure.storage.blob import BlobServiceClient
@@ -449,7 +459,9 @@ def download_from_azure(timestamp: str, download_path: Path, credentials: Dict) 
             return None
 
         # Create Azure client
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
+        )
         container_client = blob_service_client.get_container_client(container_name)
 
         # Download file
@@ -472,7 +484,9 @@ def download_from_azure(timestamp: str, download_path: Path, credentials: Dict) 
         return None
 
 
-def download_from_gcp(timestamp: str, download_path: Path, credentials: Dict) -> Optional[Path]:
+def download_from_gcp(
+    timestamp: str, download_path: Path, credentials: Dict
+) -> Optional[Path]:
     """Download backup archive from Google Cloud Storage."""
     try:
         from google.cloud import storage
@@ -625,7 +639,9 @@ def list_s3_backups(credentials: Dict) -> None:
             )
 
     except ImportError:
-        logger.error("boto3 not installed. Run 'pip install boto3' to enable S3 operations.")
+        logger.error(
+            "boto3 not installed. Run 'pip install boto3' to enable S3 operations."
+        )
     except Exception as e:
         logger.error(f"S3 error: {e}")
 
@@ -644,11 +660,15 @@ def list_azure_backups(credentials: Dict) -> None:
             return
 
         # Create Azure client
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
+        )
         container_client = blob_service_client.get_container_client(container_name)
 
         # List blobs in container
-        blobs = container_client.list_blobs(name_starts_with="heart_disease_mlp/backups/")
+        blobs = container_client.list_blobs(
+            name_starts_with="heart_disease_mlp/backups/"
+        )
         blobs_list = list(blobs)
 
         if not blobs_list:
@@ -793,7 +813,9 @@ def restore_backup(
         manifest_path = temp_dir / timestamp / "manifest.json"
         # If manifest not found at expected location, search for it
         if not manifest_path.exists():
-            logger.info(f"Manifest not found at {manifest_path}, searching in extracted files...")
+            logger.info(
+                f"Manifest not found at {manifest_path}, searching in extracted files..."
+            )
             manifest_found = False
             for root, _, files in os.walk(temp_dir):
                 if "manifest.json" in files:
@@ -803,7 +825,9 @@ def restore_backup(
                     break
 
             if not manifest_found:
-                logger.error(f"Could not find manifest.json in the extracted files at {temp_dir}")
+                logger.error(
+                    f"Could not find manifest.json in the extracted files at {temp_dir}"
+                )
                 return False
 
         with open(manifest_path, "r") as f:
@@ -965,7 +989,9 @@ def delete_s3_backup(timestamp: str, credentials: Dict) -> bool:
         return True
 
     except ImportError:
-        logger.error("boto3 not installed. Run 'pip install boto3' to enable S3 operations.")
+        logger.error(
+            "boto3 not installed. Run 'pip install boto3' to enable S3 operations."
+        )
         return False
     except Exception as e:
         logger.error(f"S3 delete error: {e}")
@@ -988,7 +1014,9 @@ def delete_azure_backup(timestamp: str, credentials: Dict) -> bool:
             return False
 
         # Create Azure client
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+        blob_service_client = BlobServiceClient.from_connection_string(
+            connection_string
+        )
         container_client = blob_service_client.get_container_client(container_name)
 
         # Delete file
@@ -1062,7 +1090,9 @@ def parse_args():
 
     # Restore command
     restore_parser = subparsers.add_parser("restore", help="Restore from a backup")
-    restore_parser.add_argument("--timestamp", help="Backup timestamp to restore (default: latest)")
+    restore_parser.add_argument(
+        "--timestamp", help="Backup timestamp to restore (default: latest)"
+    )
     restore_parser.add_argument(
         "--cloud", action="store_true", help="Download backup from cloud storage"
     )
@@ -1082,7 +1112,9 @@ def parse_args():
     prune_parser.add_argument(
         "--keep", type=int, default=5, help="Number of most recent backups to keep"
     )
-    prune_parser.add_argument("--cloud", action="store_true", help="Prune cloud backups")
+    prune_parser.add_argument(
+        "--cloud", action="store_true", help="Prune cloud backups"
+    )
     prune_parser.add_argument(
         "--storage", choices=["s3", "azure", "gcp"], help="Cloud storage provider"
     )

@@ -8,12 +8,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.data.preprocess import (
-    binarize_target,
-    create_preprocessing_pipeline,
-    handle_missing_values,
-)
-from src.features.feature_engineering import create_feature_interactions, create_medical_risk_score
+from src.data.preprocess import (binarize_target,
+                                 create_preprocessing_pipeline,
+                                 handle_missing_values)
+from src.features.feature_engineering import (create_feature_interactions,
+                                              create_medical_risk_score)
 
 
 @pytest.fixture
@@ -149,8 +148,14 @@ def test_create_feature_interactions(sample_data):
     assert "bp_chol" in result.columns
 
     # Check values
-    assert result.loc[0, "age_sex"] == sample_data.loc[0, "age"] * sample_data.loc[0, "sex"]
-    assert result.loc[0, "cp_exang"] == sample_data.loc[0, "cp"] * sample_data.loc[0, "exang"]
+    assert (
+        result.loc[0, "age_sex"]
+        == sample_data.loc[0, "age"] * sample_data.loc[0, "sex"]
+    )
+    assert (
+        result.loc[0, "cp_exang"]
+        == sample_data.loc[0, "cp"] * sample_data.loc[0, "exang"]
+    )
 
 
 def test_create_medical_risk_score(sample_data):

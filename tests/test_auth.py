@@ -2,9 +2,8 @@
 Tests for authentication functionality in the Heart Disease Prediction API.
 """
 
-from fastapi.testclient import TestClient
-
 from api.app import app, auth_settings
+from fastapi.testclient import TestClient
 
 
 def test_auth_token_endpoint():
@@ -64,7 +63,9 @@ def test_api_key_authentication():
         try:
             # Use default API key from config
             default_api_key = (
-                auth_settings.api_keys[0].key if auth_settings.api_keys else "dev_api_key"
+                auth_settings.api_keys[0].key
+                if auth_settings.api_keys
+                else "dev_api_key"
             )
 
             # Try to access protected endpoint with API key

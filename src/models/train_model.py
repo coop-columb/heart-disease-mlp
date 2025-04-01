@@ -9,25 +9,19 @@ import os
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, f1_score, precision_score,
+                             recall_score, roc_auc_score)
 from tensorflow import keras
 
 from src.models.hyperparameter_tuning import tune_keras_mlp, tune_sklearn_mlp
-from src.models.mlp_model import (
-    build_keras_mlp,
-    build_sklearn_mlp,
-    combine_predictions,
-    evaluate_keras_mlp,
-    evaluate_sklearn_mlp,
-    train_keras_mlp,
-    train_sklearn_mlp,
-)
+from src.models.mlp_model import (build_keras_mlp, build_sklearn_mlp,
+                                  combine_predictions, evaluate_keras_mlp,
+                                  evaluate_sklearn_mlp, train_keras_mlp,
+                                  train_sklearn_mlp)
 from src.utils import load_config
-from src.visualization.visualize import (
-    plot_confusion_matrix,
-    plot_precision_recall_curve,
-    plot_roc_curve,
-)
+from src.visualization.visualize import (plot_confusion_matrix,
+                                         plot_precision_recall_curve,
+                                         plot_roc_curve)
 
 # Configure logging
 logging.basicConfig(
@@ -70,7 +64,9 @@ def load_processed_data(processed_data_path):
         raise
 
 
-def train_models(X_train, X_val, X_test, y_train, y_val, y_test, config, model_dir="models"):
+def train_models(
+    X_train, X_val, X_test, y_train, y_val, y_test, config, model_dir="models"
+):
     """
     Train and evaluate heart disease prediction models.
 
@@ -161,11 +157,15 @@ def train_models(X_train, X_val, X_test, y_train, y_val, y_test, config, model_d
     )
 
     # Evaluate Keras MLP
-    keras_metrics, keras_y_pred, keras_y_pred_proba = evaluate_keras_mlp(keras_mlp, X_test, y_test)
+    keras_metrics, keras_y_pred, keras_y_pred_proba = evaluate_keras_mlp(
+        keras_mlp, X_test, y_test
+    )
 
     # Save Keras model
     keras_mlp.save(os.path.join(model_dir, "keras_mlp_model.h5"))
-    logger.info(f"Saved Keras MLP model to {os.path.join(model_dir, 'keras_mlp_model.h5')}")
+    logger.info(
+        f"Saved Keras MLP model to {os.path.join(model_dir, 'keras_mlp_model.h5')}"
+    )
 
     # Store results
     results["keras_mlp"] = {
@@ -211,7 +211,9 @@ def train_models(X_train, X_val, X_test, y_train, y_val, y_test, config, model_d
         "ensemble": ensemble_metrics,
     }
 
-    joblib.dump(evaluation_results, os.path.join(model_dir, "evaluation_results.joblib"))
+    joblib.dump(
+        evaluation_results, os.path.join(model_dir, "evaluation_results.joblib")
+    )
     logger.info(
         f"Saved evaluation results to {os.path.join(model_dir, 'evaluation_results.joblib')}"
     )
@@ -319,7 +321,9 @@ def main(
         )
 
     # Load data
-    X_train, X_val, X_test, y_train, y_val, y_test = load_processed_data(processed_data_path)
+    X_train, X_val, X_test, y_train, y_val, y_test = load_processed_data(
+        processed_data_path
+    )
 
     # Perform hyperparameter tuning if requested
     if tune:
@@ -337,18 +341,28 @@ def main(
 
         # Update config with best parameters
         # This is a simplified version; in a real setup, you might want to update the config file
-        config["model"]["mlp"]["hidden_layer_sizes"] = sklearn_best_params["hidden_layer_sizes"]
+        config["model"]["mlp"]["hidden_layer_sizes"] = sklearn_best_params[
+            "hidden_layer_sizes"
+        ]
         config["model"]["mlp"]["activation"] = sklearn_best_params["activation"]
         config["model"]["mlp"]["solver"] = sklearn_best_params["solver"]
         config["model"]["mlp"]["alpha"] = sklearn_best_params["alpha"]
-        config["model"]["mlp"]["learning_rate_init"] = sklearn_best_params["learning_rate_init"]
+        config["model"]["mlp"]["learning_rate_init"] = sklearn_best_params[
+            "learning_rate_init"
+        ]
 
-        config["model"]["advanced_mlp"]["architecture"] = keras_best_params["architecture"]
-        config["model"]["advanced_mlp"]["learning_rate"] = keras_best_params["learning_rate"]
+        config["model"]["advanced_mlp"]["architecture"] = keras_best_params[
+            "architecture"
+        ]
+        config["model"]["advanced_mlp"]["learning_rate"] = keras_best_params[
+            "learning_rate"
+        ]
         config["model"]["advanced_mlp"]["batch_size"] = keras_best_params["batch_size"]
 
     # Train models
-    results = train_models(X_train, X_val, X_test, y_train, y_val, y_test, config, model_dir)
+    results = train_models(
+        X_train, X_val, X_test, y_train, y_val, y_test, config, model_dir
+    )
 
     logger.info("Model training and evaluation complete")
 
@@ -356,7 +370,9 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train heart disease prediction models")
+    parser = argparse.ArgumentParser(
+        description="Train heart disease prediction models"
+    )
     parser.add_argument(
         "--config",
         type=str,
@@ -369,8 +385,12 @@ if __name__ == "__main__":
         default=None,
         help="Path to processed data (overrides config if provided)",
     )
-    parser.add_argument("--model-dir", type=str, default="models", help="Directory to save models")
-    parser.add_argument("--tune", action="store_true", help="Perform hyperparameter tuning")
+    parser.add_argument(
+        "--model-dir", type=str, default="models", help="Directory to save models"
+    )
+    parser.add_argument(
+        "--tune", action="store_true", help="Perform hyperparameter tuning"
+    )
 
     args = parser.parse_args()
     main(args.config, args.processed_data_path, args.model_dir, args.tune)
