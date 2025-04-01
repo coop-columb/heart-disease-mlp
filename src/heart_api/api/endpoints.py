@@ -1,18 +1,33 @@
+# Standard library imports
 import asyncio
 import logging
+import os
+import time
+from datetime import datetime
 from typing import List, Optional
 
+# Third-party imports
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 
-from src.heart_api.core import (BATCH_SIZE, MAX_WORKERS, PERFORMANCE_LOGGING,
-                                auth_handler, auth_settings, model_predictor,
-                                thread_pool)
-from src.heart_api.models import (BatchPredictionResponse, PatientData,
-                                  PredictionResponse)
+# Local application imports
+from src.heart_api.core import (
+    BATCH_SIZE,
+    MAX_WORKERS,
+    PERFORMANCE_LOGGING,
+    auth_handler,
+    auth_settings,
+    model_predictor,
+    thread_pool,
+)
+from src.heart_api.models import BatchPredictionResponse, PatientData, PredictionResponse
 
+# Initialize logger and router
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Store the server start time for uptime
+server_start_time = time.time()
 
 # Setup authentication schemes
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
@@ -79,9 +94,7 @@ def process_patient_chunk(patients_chunk, model_name=None):
 
             if model_used and model_used in prediction_result:
                 prediction = prediction_result[f"{model_used}_predictions"][0]
-                probability = prediction_result.get(
-                    f"{model_used}_probabilities", [None]
-                )[0]
+                probability = prediction_result.get(f"{model_used}_probabilities", [None])[0]
 
             # Handle missing results
             if prediction is None or model_used is None:
@@ -138,8 +151,6 @@ def process_patient_chunk(patients_chunk, model_name=None):
 
 async def process_batch_optimized(patients_data, model_name=None):
     """Process a batch of patients using chunking and parallel processing."""
-    import time
-
     start_time = time.time()
 
     # Convert patients data to dictionaries
@@ -226,9 +237,7 @@ async def predict(
         # Process prediction results
         model_used = prediction_result.get("model_used")
         if not model_used:
-            raise HTTPException(
-                status_code=500, detail="No model available for prediction"
-            )
+            raise HTTPException(status_code=500, detail="No model available for prediction")
 
         # Get prediction and probability
         prediction = prediction_result[f"{model_used}_predictions"][0]
@@ -268,9 +277,7 @@ async def predict_batch(
         if not patients_data:
             raise ValueError("No patient data provided")
 
-        results, performance_metrics = await process_batch_optimized(
-            patients_data, model
-        )
+        results, performance_metrics = await process_batch_optimized(patients_data, model)
 
         if not results:
             raise ValueError("No valid predictions could be made")
@@ -285,7 +292,7 @@ async def predict_batch(
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Error making batch predictions: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Batch prediction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error making batch predictions: {str(e)}")
 
 
 @router.get("/models/info")
@@ -305,6 +312,23 @@ async def get_model_info(authenticated: bool = Depends(verify_authentication)):
 
     except Exception as e:
         logger.error(f"Error getting model info: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail=f"Error getting model info: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error getting model info: {str(e)}")
+
+
+@router.get("/version")
+def get_version():
+    return {
+        "api_version": "1.0.0",
+        "model_version": "2024-04-01",
+        "environment": os.getenv("ENVIRONMENT", "dev"),
+    }
+
+
+@router.get("/metrics")
+def get_metrics():
+    uptime_seconds = round(time.time() - server_start_time)
+    return {
+        "uptime_seconds": uptime_seconds,
+        "server_start": datetime.fromtimestamp(server_start_time).isoformat(),
+        "status": "running",
+    }
