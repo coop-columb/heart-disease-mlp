@@ -1,0 +1,156 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_run:
+    workflows: ["CI/CD Pipeline", "Security Scans"]
+    types:
+      - completed
+    branches: [ main ]
+
+jobs:
+  prepare-release:
+    if: |
+      github.event_name == 'push' &&
+      (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main') &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=latest" >> $GITHUB_OUTPUT
+          fi
+
+  stage-deployment:
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Build Package
+        run: |
+          python -m pip install build
+          python -m build
+
+      - name: Deploy to Staging
+        env:
+          STAGE_DEPLOY_KEY: ${{ secrets.STAGE_DEPLOY_KEY }}
+        run: |
+          echo "Deploying version ${{ needs.prepare-release.outputs.version }} to staging"
+          python scripts/deploy_api.sh --environment staging \
+            --version ${{ needs.prepare-release.outputs.version }} \
+            --api-key ${{ secrets.STAGE_DEPLOY_KEY }}
+
+      - name: Run Integration Tests
+        run: |
+          pip install -e ".[dev]"
+          pytest tests/test_api_integration.py --url https://staging-api.example.com
+
+  production-deployment:
+    needs: [prepare-release, stage-deployment]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Deploy to Production
+        env:
+          PROD_DEPLOY_KEY: ${{ secrets.PROD_DEPLOY_KEY }}
+        run: |
+          echo "Deploying version ${{ needs.prepare-release.outputs.version }} to production"
+          python scripts/deploy_api.sh --environment production \
+            --version ${{ needs.prepare-release.outputs.version }} \
+            --api-key ${{ secrets.PROD_DEPLOY_KEY }}
+
+      - name: Verify Deployment
+        run: |
+          pip install -e ".[dev]"
+          pytest tests/test_api_integration.py --url https://api.example.com
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  model-deployment:
+    needs: [prepare-release, stage-deployment]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://models.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Deploy ML Models
+        env:
+          MODEL_DEPLOY_KEY: ${{ secrets.MODEL_DEPLOY_KEY }}
+        run: |
+          echo "Deploying models version ${{ needs.prepare-release.outputs.version }}"
+          python scripts/deploy_models.sh \
+            --version ${{ needs.prepare-release.outputs.version }} \
+            --api-key ${{ secrets.MODEL_DEPLOY_KEY }}
+
+      - name: Verify Model Deployment
+        run: |
+          pip install -e ".[dev]"
+          pytest tests/test_model_performance.py --deployed-models
+
+  notify:
+    needs: [production-deployment, model-deployment]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Success
+        if: ${{ success() }}
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: 'deployments'
+          slack-message: "✅ Successfully deployed version ${{ needs.prepare-release.outputs.version }} to production!"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Notify Failure
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1
+        with:
+          channel-id: 'deployments'
+          slack-message: "❌ Failed to deploy version ${{ needs.prepare-release.outputs.version }} to production."
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
