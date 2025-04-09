@@ -1,0 +1,120 @@
+# Environment Configurations for Deployment
+
+default: &default
+  log_level: INFO
+  api_timeout: 30
+  batch_size: 50
+  cache_enabled: true
+  cache_ttl: 3600
+  performance:
+    max_response_time: 500
+    min_requests_per_second: 10
+  security:
+    rate_limit: 100
+    rate_window: 60
+    require_ssl: true
+    allowed_origins: []
+
+development:
+  <<: *default
+  environment: development
+  debug: true
+  log_level: DEBUG
+  api_url: http://localhost:8000
+  model_path: models/development
+  security:
+    rate_limit: 0  # Disabled for development
+    allowed_origins: ["*"]
+
+staging:
+  <<: *default
+  environment: staging
+  debug: false
+  api_url: https://staging-api.example.com
+  model_path: models/staging
+  monitoring:
+    enabled: true
+    metrics_port: 9090
+  security:
+    rate_limit: 200
+    allowed_origins:
+      - https://staging.example.com
+      - https://staging-admin.example.com
+  performance:
+    max_response_time: 1000  # More lenient for staging
+  alerts:
+    slack_channel: staging-alerts
+    email: staging-alerts@example.com
+
+production:
+  <<: *default
+  environment: production
+  debug: false
+  api_url: https://api.example.com
+  model_path: models/production
+  monitoring:
+    enabled: true
+    metrics_port: 9090
+    alerting: true
+  security:
+    rate_limit: 1000
+    rate_window: 60
+    allowed_origins:
+      - https://app.example.com
+      - https://admin.example.com
+    additional_headers:
+      - Strict-Transport-Security
+      - Content-Security-Policy
+  performance:
+    max_response_time: 200
+    min_requests_per_second: 50
+  backup:
+    enabled: true
+    interval: 3600
+    retention_days: 30
+  scaling:
+    min_instances: 3
+    max_instances: 10
+    target_cpu_utilization: 70
+  alerts:
+    slack_channel: prod-alerts
+    pagerduty_integration: true
+    email: oncall@example.com
+
+# Model-specific configurations
+models:
+  development: &model_default
+    batch_size: 32
+    cache_predictions: true
+    cache_ttl: 3600
+    performance_thresholds:
+      accuracy: 0.70
+      auc: 0.75
+      f1: 0.70
+    monitoring:
+      prediction_latency_threshold: 100
+      batch_latency_threshold: 1000
+
+  staging:
+    <<: *model_default
+    performance_thresholds:
+      accuracy: 0.75
+      auc: 0.80
+      f1: 0.75
+    monitoring:
+      prediction_latency_threshold: 50
+      batch_latency_threshold: 500
+
+  production:
+    <<: *model_default
+    performance_thresholds:
+      accuracy: 0.80
+      auc: 0.85
+      f1: 0.80
+    monitoring:
+      prediction_latency_threshold: 30
+      batch_latency_threshold: 300
+    validation:
+      required: true
+      min_test_cases: 1000
+      bias_threshold: 0.05

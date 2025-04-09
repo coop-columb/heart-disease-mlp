@@ -1,0 +1,105 @@
+name: ML Pipeline Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/heart_disease/**'
+      - 'src/models/**'
+      - 'data/**'
+      - 'tests/test_models.py'
+      - 'tests/test_model_performance.py'
+  pull_request:
+    paths:
+      - 'src/heart_disease/**'
+      - 'src/models/**'
+      - 'data/**'
+      - 'tests/test_models.py'
+      - 'tests/test_model_performance.py'
+
+jobs:
+  validate-ml:
+    name: Validate ML Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Check model performance
+        run: |
+          pytest tests/test_model_performance.py \
+            --threshold-accuracy 0.75 \
+            --threshold-auc 0.80 \
+            --threshold-f1 0.70
+      
+      - name: Validate data processing
+        run: |
+          python scripts/validate_data.py \
+            --check-missing \
+            --check-distributions \
+            --check-correlations
+      
+      - name: Check for model bias
+        run: |
+          python scripts/check_model_bias.py \
+            --protected-features "sex,age" \
+            --threshold 0.15
+      
+      - name: Validate model artifacts
+        run: |
+          python scripts/validate_models.py \
+            --check-size \
+            --check-format \
+            --check-versioning
+
+  ml-security:
+    name: ML Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for data leakage
+        run: |
+          python scripts/check_data_leakage.py \
+            --check-test-isolation \
+            --check-feature-leakage
+      
+      - name: Validate model inputs
+        run: |
+          python scripts/validate_model_inputs.py \
+            --check-bounds \
+            --check-types \
+            --check-sanitization
+      
+      - name: Check model attack surface
+        run: |
+          python scripts/check_model_security.py \
+            --check-adversarial \
+            --check-inference-attacks
+
+  model-documentation:
+    name: Model Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check model cards
+        run: |
+          python scripts/validate_model_cards.py \
+            --required-sections "usage,limitations,performance"
+      
+      - name: Validate metrics documentation
+        run: |
+          python scripts/check_metrics_docs.py \
+            --verify-calculations \
+            --check-completeness
