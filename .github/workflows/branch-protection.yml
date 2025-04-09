@@ -1,0 +1,32 @@
+name: Branch Protection
+
+on:
+  push:
+    paths:
+      - '.github/branch-protection.yml'
+    branches:
+      - main
+      - develop
+
+jobs:
+  update-branch-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Branch Protection
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # For main branch
+          gh api --method PUT /repos/${{ github.repository }}/branches/main/protection \
+            --field required_status_checks='{"strict":true,"contexts":["Validate & Test","Security Scan","ML Model Validation"]}' \
+            --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
+            --field enforce_admins=true
+
+          # For develop branch
+          gh api --method PUT /repos/${{ github.repository }}/branches/develop/protection \
+            --field required_status_checks='{"strict":true,"contexts":["Validate & Test","Security Scan","ML Model Validation"]}' \
+            --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
+            --field enforce_admins=false
+
