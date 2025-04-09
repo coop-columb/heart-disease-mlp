@@ -1,311 +1,101 @@
-name: Heart Disease MLP CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
-
-# Add explicit permissions
-permissions:
-  contents: read
-  packages: write  # Needed for pushing to ghcr.io
+    branches: [ main ]
 
 jobs:
-  # Code Quality & Tests
-  lint-and-test:
-    name: Lint and Test
+  validate:
+    name: Validate & Test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.8', '3.9', '3.10']
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install with dev dependencies
+          pip install -e ".[dev]"
+      
+      - name: Check formatting
+        run: |
+          black --check src tests
+          isort --check-only src tests
+      
+      - name: Lint
+        run: |
+          flake8 src tests
+      
+      - name: Type check
+        run: |
+          mypy src
+      
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=src --cov-report=xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest pytest-cov black isort flake8
-        pip install -r requirements.txt
-
-    - name: Verify directory structure
-      run: |
-        # Create required directories to ensure they exist
-        mkdir -p data/raw data/processed models/optuna logs
-
-    - name: Lint with flake8
-      run: |
-        flake8 src api tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 src api tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-    - name: Check code style
-      run: |
-        black --check src api tests || echo "Black check failed but continuing"
-        isort --check-only --profile black src api tests || echo "Isort check failed but continuing"
-
-    - name: Generate synthetic test data
-      run: |
-        # Create synthetic test data using our script
-        python scripts/generate_test_data.py
-
-        # Also try to run the regular preprocessing if data is available
-        python -m src.data.make_dataset || echo "Regular data processing failed, using synthetic data"
-
-    - name: Create synthetic models for tests
-      run: |
-        # Create minimal test models
-        python scripts/generate_test_models.py
-
-    - name: Run tests
-      run: |
-        # Run tests with explicit skipping of known problematic tests
-        pytest tests/ -v -k "not test_api_endpoint" || echo "Some tests failed but continuing"
-
-    - name: Run model tests
-      run: |
-        # Run model-specific tests that should now work
-        pytest tests/test_models.py -v || echo "Some model tests failed but continuing"
-
-    - name: Run API tests
-      run: |
-        # Run API tests with adjusted expectations
-        pytest tests/test_api.py -v || echo "Some API tests failed but continuing"
-
-    - name: Generate coverage report
-      run: |
-        # Generate coverage report with error handling
-        pytest --cov=src --cov=api --cov-report=xml --cov-report=term -k "not test_api_endpoint" || echo "Coverage report generation failed but continuing"
-
-    - name: Upload coverage report
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.xml
-        fail_ci_if_error: false
-        verbose: true
-
-  # Docker Build and Test
-  docker-build:
-    name: Docker Build
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    needs: lint-and-test
-
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Check dependencies for known vulnerabilities
+        run: |
+          pip install safety
+          safety check
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy joblib scikit-learn tensorflow
-
-    - name: Create synthetic data for Docker tests
-      run: |
-        # Create synthetic test data
-        python scripts/generate_test_data.py
-        python scripts/generate_test_models.py
-
-    - name: Build Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: false
-        load: true
-        tags: heart-disease-mlp:test
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Run Docker container for test
-      run: |
-        docker run -d -p 8000:8000 --name heart-disease-test heart-disease-mlp:test
-        sleep 20  # Give the container plenty of time to start
-
-    - name: Check container status
-      run: |
-        docker ps
-        docker logs heart-disease-test || echo "Container logs had an error but continuing"
-
-    - name: Test Docker container health
-      run: |
-        curl -s http://localhost:8000/health || echo "Health check failed but continuing"
-
-    - name: Clean up Docker container
-      if: always()
-      run: |
-        docker stop heart-disease-test || true
-        docker rm heart-disease-test || true
-
-  # Push to registry (only on main branch)
-  push-to-registry:
-    name: Push Docker image to Registry
+  model-validation:
+    name: ML Model Validation
     runs-on: ubuntu-latest
-    needs: docker-build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
+    needs: [validate]
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Run model tests
+        run: |
+          pytest tests/test_models.py tests/test_model_performance.py -v
+      
+      - name: Validate model metrics
+        run: |
+          python scripts/generate_test_models.py --validate-only
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Debug GitHub context
-      run: |
-        echo "Repository owner: ${{ github.repository_owner }}"
-        echo "Repository: ${{ github.repository }}"
-        echo "Actor: ${{ github.actor }}"
-        echo "GitHub ref: ${{ github.ref }}"
-        echo "GitHub SHA: ${{ github.sha }}"
-
-    - name: Verify Docker and registry access
-      run: |
-        echo "Verifying Docker setup..."
-        docker version
-        echo "Trying registry access..."
-        echo "Current Docker config:"
-        cat ~/.docker/config.json || echo "No Docker config file found"
-
-    - name: Ensure Docker is logged in
-      run: |
-        echo "Re-checking Docker login status..."
-        echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-        echo "Docker login complete"
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:latest
-          ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Verify pushed image
-      run: |
-        echo "Verifying image was pushed to registry..."
-        docker pull ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:latest || echo "Failed to pull image, but continuing"
-        docker images | grep heart-disease-mlp || echo "Image not found locally, but may still be in registry"
-
-    - name: Scan image for vulnerabilities
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
-        format: 'table'
-        exit-code: '0'  # Don't fail on vulnerabilities
-        severity: 'CRITICAL,HIGH'
-      continue-on-error: true
-
-  # Deploy to staging (only on main branch with required secrets)
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: push-to-registry
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Check required secrets
-      id: check_secrets
-      run: |
-        if [[ -z "${{ secrets.DEPLOY_HOST }}" || -z "${{ secrets.DEPLOY_USER }}" || -z "${{ secrets.SSH_PRIVATE_KEY }}" ]]; then
-          echo "Required secrets for deployment are missing. Skipping."
-          echo "skip_deployment=true" >> $GITHUB_OUTPUT
-        else
-          echo "All required secrets are available."
-          echo "skip_deployment=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Set up SSH for deployment
-      if: steps.check_secrets.outputs.skip_deployment != 'true'
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Deploy to staging server
-      if: steps.check_secrets.outputs.skip_deployment != 'true'
-      env:
-        CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/heart-disease-mlp:${{ github.sha }}
-        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      run: |
-        # Create simple deployment script
-        cat > deploy.sh <<EOL
-        #!/bin/bash
-        set -e
-        echo "Deploying to staging..."
-        mkdir -p ~/heart-disease-mlp
-        cd ~/heart-disease-mlp
-
-        # Get docker-compose file if it doesn't exist
-        if [ ! -f docker-compose.yml ]; then
-          echo "Getting docker-compose.yml..."
-          cat > docker-compose.yml <<EOF
-        version: '3'
-        services:
-          heart-disease-api:
-            image: ${CONTAINER_IMAGE}
-            ports:
-              - "8000:8000"
-            restart: unless-stopped
-            volumes:
-              - ./data:/app/data
-              - ./models:/app/models
-            environment:
-              - ENVIRONMENT=staging
-              - LOG_LEVEL=INFO
-        EOF
-        fi
-
-        # Pull new image and restart
-        echo "Pulling image: ${CONTAINER_IMAGE}"
-        docker pull ${CONTAINER_IMAGE}
-
-        # Update image reference
-        sed -i "s|image: .*|image: ${CONTAINER_IMAGE}|g" docker-compose.yml
-
-        # Restart service
-        echo "Restarting service..."
-        docker-compose down || true
-        docker-compose up -d
-
-        # Cleanup
-        echo "Cleaning up old images..."
-        docker image prune -f
-        EOL
-
-        # Copy and execute
-        chmod +x deploy.sh
-        scp -o StrictHostKeyChecking=no deploy.sh ${DEPLOY_USER}@${DEPLOY_HOST}:~/deploy.sh
-        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} "chmod +x ~/deploy.sh && ~/deploy.sh"
