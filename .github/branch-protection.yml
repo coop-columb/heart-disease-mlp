@@ -1,0 +1,29 @@
+# Branch Protection Rules
+
+## Main Branch
+main:
+  required_status_checks:
+    strict: true
+    contexts:
+      - "Validate & Test"
+      - "Security Scan"
+      - "ML Model Validation"
+  required_pull_request_reviews:
+    required_approving_review_count: 1
+    dismiss_stale_reviews: true
+  enforce_admins: true
+  restrictions: null
+
+## Develop Branch
+develop:
+  required_status_checks:
+    strict: true
+    contexts:
+      - "Validate & Test"
+      - "Security Scan"
+      - "ML Model Validation"
+  required_pull_request_reviews:
+    required_approving_review_count: 1
+    dismiss_stale_reviews: true
+  enforce_admins: false
+  restrictions: null

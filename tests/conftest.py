@@ -1,7 +1,6 @@
 """
 Shared test fixtures for all tests.
 """
-
 import os
 import sys
 
@@ -9,32 +8,18 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-# Reset path and add project root to path to avoid conflicts with other projects
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-
-# Filter out any paths related to EmotionAdaptiveMusic
-sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
-sys.path.insert(0, project_root)
+# Add project root to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import after path setup
-from src.heart_api.main import app  # noqa: E402
+from api.app import app  # noqa: E402
 from src.models.predict_model import HeartDiseasePredictor  # noqa: E402
 
 
 @pytest.fixture
 def client():
-    """Create a test client for the FastAPI app with authentication disabled for testing."""
-    try:
-        # Add special headers to disable auth in app for tests
-        test_client = TestClient(app)
-
-        # Disable auth for testing by adding the test API key header
-        test_client.headers.update({"X-API-Key": "dev_api_key"})
-
-        return test_client
-    except Exception as e:
-        pytest.skip(f"Unable to create TestClient: {e}")
-        return None
+    """Create a test client for the FastAPI app."""
+    return TestClient(app)
 
 
 @pytest.fixture
@@ -136,17 +121,4 @@ def predictor():
         return HeartDiseasePredictor()
     except Exception:
         # If models not found, this will be skipped
-        return None
-
-
-@pytest.fixture
-def authenticated_client():
-    """Create a test client for the FastAPI app with authentication."""
-    try:
-        # Create client with dev API key
-        test_client = TestClient(app)
-        test_client.headers.update({"X-API-Key": "dev_api_key"})
-        return test_client
-    except Exception as e:
-        pytest.skip(f"Unable to create authenticated TestClient: {e}")
         return None
