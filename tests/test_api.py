@@ -1,7 +1,6 @@
 """
 Tests for the Heart Disease Prediction API.
 """
-
 # flake8: noqa: E402
 import os
 import sys
@@ -9,24 +8,16 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-# Reset path and add project root to path to avoid conflicts with other projects
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Add project root to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Filter out any paths related to EmotionAdaptiveMusic
-sys.path = [p for p in sys.path if "EmotionAdaptiveMusic" not in p]
-sys.path.insert(0, project_root)
-
-from src.heart_api.main import app
+from api.app import app
 
 
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
-    try:
-        return TestClient(app)
-    except Exception as e:
-        pytest.skip(f"Unable to create TestClient: {e}")
-        return None
+    return TestClient(app)
 
 
 @pytest.fixture
@@ -53,9 +44,7 @@ def test_root_endpoint(client):
     """Test the root endpoint."""
     response = client.get("/")
     assert response.status_code == 200
-    # Root endpoint now returns HTML content instead of JSON
-    assert "<!DOCTYPE html>" in response.text
-    assert "<title>Heart Disease Prediction</title>" in response.text
+    assert "message" in response.json()
 
 
 def test_health_check(client):
