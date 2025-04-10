@@ -11,7 +11,7 @@ authors = [
     {name = "A.H. Cooperstone", email = "ahc2188@columbia.edu"}
 ]
 license = {text = "MIT"}
-requires-python = ">=3.11"
+requires-python = ">=3.9"  # 3.11+ recommended for best performance
 dependencies = [
     # Core ML
     "numpy>=1.22.0",
