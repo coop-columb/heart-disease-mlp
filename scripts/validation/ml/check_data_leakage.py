@@ -415,5 +415,7 @@ def main():
             logger.info(f"{check_name}: {'passed' if check_results['passed'] else 'failed'}")
             if not check_results['passed']:
                 for issue in check_results['details'].get('issues', []):
-                    
-
+                    logger.warning(f"- {issue}")
+        
+        # Exit with status
+        sys.exit(0 if passed else 1)

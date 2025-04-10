@@ -428,5 +428,84 @@ def check_auth_security(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Check
+        description="Check API authentication security implementation."
+    )
+    parser.add_argument(
+        "--base-url",
+        required=True,
+        help="Base URL of the API"
+    )
+    parser.add_argument(
+        "--username",
+        required=True,
+        help="Username for authentication"
+    )
+    parser.add_argument(
+        "--password",
+        required=True,
+        help="Password for authentication"
+    )
+    parser.add_argument(
+        "--login-endpoint",
+        default="auth/login",
+        help="Login endpoint path"
+    )
+    parser.add_argument(
+        "--protected-endpoint",
+        default="predict",
+        help="Protected endpoint to test"
+    )
+    parser.add_argument(
+        "--refresh-endpoint",
+        help="Token refresh endpoint path"
+    )
+    parser.add_argument(
+        "--output-path",
+        help="Path to save results JSON"
+    )
+    
+    args = parser.parse_args()
+    
+    try:
+        passed, results = check_auth_security(
+            args.base_url,
+            args.username,
+            args.password,
+            args.login_endpoint,
+            args.protected_endpoint,
+            args.refresh_endpoint,
+            None,  # scope_endpoints
+            args.output_path
+        )
+        
+        # Log results
+        logger.info("Authentication Security Check Results:")
+        
+        # Log authentication flow results
+        auth_results = results["authentication_flow"]
+        logger.info(f"Authentication Flow: {'passed' if auth_results['passed'] else 'failed'}")
+        
+        if not auth_results["passed"]:
+            for issue in auth_results["details"]["issues"]:
+                logger.warning(f"- {issue}")
+        
+        # Log authorization scope results if tested
+        scope_results = results["authorization_scopes"]
+        if scope_results["details"]["endpoint_results"]:
+            logger.info(f"Authorization Scopes: {'passed' if scope_results['passed'] else 'failed'}")
+            
+            if not scope_results["passed"]:
+                for issue in scope_results["details"]["issues"]:
+                    logger.warning(f"- {issue}")
+        
+        logger.info(f"Overall validation {'passed' if passed else 'failed'}")
+        
+        # Exit with status
+        sys.exit(0 if passed else 1)
+    
+    except Exception as e:
+        logger.error(f"Validation failed: {e}")
+        sys.exit(1)
 
+if __name__ == "__main__":
+    main()
